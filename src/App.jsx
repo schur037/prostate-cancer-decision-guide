@@ -627,7 +627,7 @@ export default function ProstateCancerDecisionGuide() {
   const [ipss,setIpss]=useState({incomplete:-1,frequency:-1,intermittency:-1,urgency:-1,weakstream:-1,straining:-1,nocturia:-1,qol:-1});
   const [shim,setShim]=useState({confidence:-1,firmness:-1,maintain:-1,difficulty:-1,satisfaction:-1});
   const [bodyMetrics,setBodyMetrics]=useState({heightFt:"",heightIn:"",weightLbs:"",diabetes:false,priorTurp:false,sexuallyActive:true});
-  const [priorities,setPriorities]=useState({avoidSideEffects:3,certaintyOfCure:3,minimizeRecovery:3,preserveErections:3,avoidOngoing:3,preserveBowel:3});
+  const [priorities,setPriorities]=useState({avoidSideEffects:2,certaintyOfCure:2,minimizeRecovery:2,preserveErections:2,avoidOngoing:2,preserveBowel:2});
   const [expandedTreatment,setExpandedTreatment]=useState(null);
   const [activeOutcome,setActiveOutcome]=useState("erectileFunction");
 
@@ -903,25 +903,125 @@ export default function ProstateCancerDecisionGuide() {
     );
   }
 
-  // ==== STEP 3: PRIORITIES ====
-  if(step===3){return(
-    <div style={cs}><ProgressBar step={3} total={STEPS.length}/>
-      <h2 style={{fontSize:22,fontWeight:700,marginBottom:4}}>What Matters Most to You?</h2>
-      <p style={{color:"#64748b",fontSize:14,marginBottom:24}}>Move each slider to reflect how important each factor is.</p>
-      <Card style={{marginBottom:16,padding:24}}>
-        <Slider label="Avoiding treatment side effects" value={priorities.avoidSideEffects} onChange={v=>setPriorities({...priorities,avoidSideEffects:v})} leftLabel="Less important" rightLabel="Very important"/>
-        <Slider label="Maximum certainty of cancer cure" value={priorities.certaintyOfCure} onChange={v=>setPriorities({...priorities,certaintyOfCure:v})} leftLabel="Less important" rightLabel="Very important"/>
-        <Slider label="Minimizing recovery time" value={priorities.minimizeRecovery} onChange={v=>setPriorities({...priorities,minimizeRecovery:v})} leftLabel="Less important" rightLabel="Very important"/>
-        <Slider label="Preserving sexual function" value={priorities.preserveErections} onChange={v=>setPriorities({...priorities,preserveErections:v})} leftLabel="Less important" rightLabel="Very important"/>
-        <Slider label="Avoiding ongoing monitoring" value={priorities.avoidOngoing} onChange={v=>setPriorities({...priorities,avoidOngoing:v})} leftLabel="Less important" rightLabel="Very important"/>
-        <Slider label="Preserving bowel function" value={priorities.preserveBowel} onChange={v=>setPriorities({...priorities,preserveBowel:v})} leftLabel="Less important" rightLabel="Very important"/>
-      </Card>
-      <div style={{display:"flex",justifyContent:"space-between",marginTop:32}}>
-        <button style={btnS} onClick={()=>setStep(2)}>← Back</button>
-        <button style={btnP} onClick={()=>setStep(4)}>See My Results →</button>
+  // ==== STEP 3: PRIORITIES (Point Allocation) ====
+  if(step===3){
+    const TOTAL_POINTS = 12;
+    const priorityLabels = {
+      avoidSideEffects: { label: "Avoiding treatment side effects", icon: "🛡️", desc: "Minimizing risks of incontinence, ED, bowel changes" },
+      certaintyOfCure: { label: "Maximum certainty of cancer cure", icon: "🎯", desc: "Highest probability the cancer is completely eliminated" },
+      minimizeRecovery: { label: "Minimizing recovery time", icon: "⏱️", desc: "Getting back to normal life and activity quickly" },
+      preserveErections: { label: "Preserving sexual function", icon: "❤️", desc: "Maintaining erections and sexual quality of life" },
+      avoidOngoing: { label: "Avoiding ongoing monitoring", icon: "📋", desc: "Prefer definitive treatment over repeated tests and biopsies" },
+      preserveBowel: { label: "Preserving bowel function", icon: "🩺", desc: "Avoiding rectal bleeding, urgency, or fecal leakage" },
+    };
+    const spent = Object.values(priorities).reduce((a,b)=>a+b, 0);
+    const remaining = TOTAL_POINTS - spent;
+
+    const adjustPriority = (key, delta) => {
+      const newVal = priorities[key] + delta;
+      if (newVal < 0) return; // can't go below 0
+      if (newVal > 6) return; // can't put more than 6 on one item
+      if (delta > 0 && remaining <= 0) return; // no points left
+      setPriorities({...priorities, [key]: newVal});
+    };
+
+    const resetPriorities = () => {
+      setPriorities({avoidSideEffects:2,certaintyOfCure:2,minimizeRecovery:2,preserveErections:2,avoidOngoing:2,preserveBowel:2});
+    };
+
+    // Sort by current allocation for visual ranking
+    const sortedKeys = Object.keys(priorityLabels).sort((a,b) => priorities[b] - priorities[a]);
+
+    return(
+      <div style={cs}><ProgressBar step={3} total={STEPS.length}/>
+        <h2 style={{fontSize:22,fontWeight:700,marginBottom:4}}>What Matters Most to You?</h2>
+        <p style={{color:"#64748b",fontSize:14,marginBottom:16}}>
+          You have <strong>{TOTAL_POINTS} points</strong> to distribute across six factors. Adding points to one factor means taking them away from others — this forces real trade-offs, just like treatment decisions do.
+        </p>
+
+        {/* Points remaining banner */}
+        <div style={{
+          background: remaining > 0 ? "#eff6ff" : remaining === 0 ? "#f0fdf4" : "#fef2f2",
+          border: `1px solid ${remaining > 0 ? "#bfdbfe" : remaining === 0 ? "#bbf7d0" : "#fecaca"}`,
+          borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <span style={{fontSize:14,fontWeight:700,color: remaining > 0 ? "#2563eb" : remaining === 0 ? "#059669" : "#dc2626"}}>
+              {remaining > 0 ? `${remaining} point${remaining !== 1 ? 's' : ''} remaining` : remaining === 0 ? "All points allocated" : "Over budget!"}
+            </span>
+            <span style={{fontSize:12,color:"#94a3b8",marginLeft:8}}>({spent}/{TOTAL_POINTS} used)</span>
+          </div>
+          <button onClick={resetPriorities} style={{fontSize:12,color:"#64748b",background:"none",border:"1px solid #e2e8f0",borderRadius:6,padding:"4px 10px",cursor:"pointer"}}>Reset</button>
+        </div>
+
+        {/* Budget bar visualization */}
+        <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",marginBottom:20,background:"#e2e8f0"}}>
+          {sortedKeys.map(key => {
+            const pct = (priorities[key] / TOTAL_POINTS) * 100;
+            const colors = {avoidSideEffects:"#3b82f6",certaintyOfCure:"#dc2626",minimizeRecovery:"#f59e0b",preserveErections:"#ec4899",avoidOngoing:"#8b5cf6",preserveBowel:"#059669"};
+            return pct > 0 ? <div key={key} style={{width:`${pct}%`,background:colors[key],transition:"width 0.3s"}}/> : null;
+          })}
+        </div>
+
+        {/* Priority cards */}
+        {Object.entries(priorityLabels).map(([key, {label, icon, desc}]) => {
+          const val = priorities[key];
+          const pct = (val / TOTAL_POINTS) * 100;
+          const colors = {avoidSideEffects:"#3b82f6",certaintyOfCure:"#dc2626",minimizeRecovery:"#f59e0b",preserveErections:"#ec4899",avoidOngoing:"#8b5cf6",preserveBowel:"#059669"};
+          const color = colors[key];
+          return (
+            <div key={key} style={{
+              background: val > 0 ? "#fff" : "#f8fafc",
+              border: `1px solid ${val > 3 ? color + "60" : "#e2e8f0"}`,
+              borderRadius: 12, padding: "14px 16px", marginBottom: 8,
+              transition: "all 0.2s",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:22}}>{icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14,color:"#1e293b"}}>{label}</div>
+                  <div style={{fontSize:12,color:"#94a3b8"}}>{desc}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <button onClick={()=>adjustPriority(key,-1)} disabled={val<=0}
+                    style={{width:32,height:32,borderRadius:8,border:"1px solid #e2e8f0",background:val>0?"#fff":"#f1f5f9",
+                      cursor:val>0?"pointer":"default",fontSize:18,fontWeight:700,color:val>0?"#64748b":"#cbd5e1",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    −
+                  </button>
+                  <div style={{width:36,textAlign:"center",fontSize:20,fontWeight:800,color: val > 0 ? color : "#cbd5e1"}}>{val}</div>
+                  <button onClick={()=>adjustPriority(key,1)} disabled={remaining<=0||val>=6}
+                    style={{width:32,height:32,borderRadius:8,border:"1px solid #e2e8f0",
+                      background:remaining>0&&val<6?"#fff":"#f1f5f9",
+                      cursor:remaining>0&&val<6?"pointer":"default",fontSize:18,fontWeight:700,
+                      color:remaining>0&&val<6?color:"#cbd5e1",
+                      display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    +
+                  </button>
+                </div>
+              </div>
+              {/* Visual bar */}
+              <div style={{marginTop:8,height:6,borderRadius:3,background:"#f1f5f9",overflow:"hidden"}}>
+                <div style={{width:`${pct}%`,height:"100%",background:color,borderRadius:3,transition:"width 0.3s"}}/>
+              </div>
+            </div>
+          );
+        })}
+
+        <div style={{background:"#fefce8",border:"1px solid #fef08a",borderRadius:10,padding:12,marginTop:16,fontSize:12,color:"#854d0e"}}>
+          <strong>Why points instead of ratings?</strong> When everything is rated "very important," it doesn't help distinguish what truly matters to you. A fixed budget forces the same trade-offs your treatment decision requires — investing more in one area means accepting less in another.
+        </div>
+
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:32}}>
+          <button style={btnS} onClick={()=>setStep(2)}>← Back</button>
+          <button style={{...btnP,opacity:remaining===0?1:0.5}} onClick={()=>setStep(4)}>
+            {remaining > 0 ? `Allocate ${remaining} more point${remaining!==1?'s':''}` : 'See My Results →'}
+          </button>
+        </div>
       </div>
-    </div>
-  );}
+    );
+  }
 
   // ==== STEP 4: TREATMENT GUIDE ====
   if(step===4){
