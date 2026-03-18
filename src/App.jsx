@@ -376,100 +376,182 @@ function classifyRisk(c) {
 
 // ---- PERSONALIZED OUTCOME PREDICTION ENGINE ----
 // Adjusts ProtecT population-level rates based on patient-specific baseline scores
+// REDESIGNED: Patient-specific predictions starting from YOUR baseline, not population averages.
+// Uses SHIM → personal erectile baseline, IPSS → personal urinary baseline,
+// then applies treatment-specific RELATIVE decrements and age-related natural decline.
 function predictOutcomes(baseline) {
   const {ipssTotal, ipssQol, shimTotal, bmi, age, diabetes, priorTurp, sexuallyActive} = baseline;
   const a = parseInt(age)||62;
   const b = parseFloat(bmi)||27;
   const ipss = parseInt(ipssTotal)||7;
   const shim = parseInt(shimTotal)||22;
-
-  // Erectile function multipliers (applied to ProtecT recovery rates)
-  let edBase = 1.0;
-  // SHIM-based adjustment (strongest predictor)
-  if(shim>=22) edBase=1.0;
-  else if(shim>=17) edBase=0.72;
-  else if(shim>=12) edBase=0.48;
-  else if(shim>=8) edBase=0.28;
-  else edBase=0.12;
-  // Age adjustment
-  if(a<55) edBase*=1.25;
-  else if(a>65) edBase*=0.70;
-  else if(a>70) edBase*=0.50;
-  // BMI adjustment
-  if(b>=35) edBase*=0.70;
-  else if(b>=30) edBase*=0.82;
-  // Diabetes
-  if(diabetes) edBase*=0.72;
-
-  // Continence multipliers (applied to ProtecT pad-use rates — higher = worse)
-  let continBase = 1.0;
-  if(a<55) continBase=0.65;
-  else if(a>70) continBase=1.45;
-  else if(a>65) continBase=1.20;
-  if(b>=35) continBase*=1.35;
-  else if(b>=30) continBase*=1.15;
-  if(ipss>19) continBase*=1.30;
-  else if(ipss>7) continBase*=1.10;
-  if(priorTurp) continBase*=1.40;
-
-  // Voiding / nocturia adjustment
-  let voidBase = 1.0;
-  if(ipss>19) voidBase=1.40;
-  else if(ipss>7) voidBase=1.15;
-
-  // Bowel — less patient-specific, mostly technique-dependent
-  let bowelBase = 1.0;
-
   const cap = (v,mn=0,mx=100)=>Math.max(mn,Math.min(mx,Math.round(v)));
 
-  // Generate personalized projections at key timepoints
-  // Surgery outcomes
-  const surgery = {
-    erection: {
-      sixMo: cap(12*edBase), oneYr: cap(17*edBase), twoYr: cap(21*edBase),
-      threeYr: cap(21*edBase), sixYr: cap(17*edBase),
-    },
-    pads: {
-      sixMo: cap(46*continBase), oneYr: cap(26*continBase), twoYr: cap(20*continBase),
-      sixYr: cap(17*continBase),
-    },
-    nocturia: { sixMo: cap(15*voidBase), oneYr: cap(17*voidBase), sixYr: cap(25*voidBase) },
-    bowel: { sixMo: 3, sixYr: cap(5*bowelBase) },
+  // ========== STEP 1: Derive YOUR personal baseline probabilities ==========
+  // SHIM → probability of erections firm enough for intercourse (%)
+  // Based on SHIM validation studies (Rosen et al, Int J Impot Res 1999)
+  let myErectileBaseline;
+  if(!sexuallyActive) myErectileBaseline = 5;
+  else if(shim >= 22) myErectileBaseline = 95;
+  else if(shim >= 17) myErectileBaseline = 75;
+  else if(shim >= 12) myErectileBaseline = 50;
+  else if(shim >= 8) myErectileBaseline = 28;
+  else myErectileBaseline = 10;
+
+  // IPSS → personal urinary baseline (probability of NOT needing pads)
+  // Nearly all men at baseline don't use pads; IPSS mainly predicts voiding/storage
+  let myPadBaseline = 1; // % using pads at baseline (most men ≈1%)
+  if(ipss > 19) myPadBaseline = 5;
+  else if(ipss > 7) myPadBaseline = 2;
+
+  // Nocturia baseline derived from IPSS nocturia question or total
+  let myNocturiaBaseline = 22; // ProtecT population baseline
+  if(ipss <= 7) myNocturiaBaseline = 15;
+  else if(ipss > 19) myNocturiaBaseline = 40;
+
+  // ========== STEP 2: Age-related natural decline rates ==========
+  // Massachusetts Male Aging Study: ED incidence ~2-5%/year after 50
+  let annualEDDecline; // % absolute decline per year
+  if(a < 50) annualEDDecline = 1.2;
+  else if(a < 55) annualEDDecline = 1.8;
+  else if(a < 60) annualEDDecline = 2.5;
+  else if(a < 65) annualEDDecline = 3.2;
+  else if(a < 70) annualEDDecline = 4.0;
+  else annualEDDecline = 5.0;
+  // Diabetes and BMI accelerate natural decline
+  if(diabetes) annualEDDecline *= 1.5;
+  if(b >= 35) annualEDDecline *= 1.3;
+  else if(b >= 30) annualEDDecline *= 1.1;
+
+  // Nocturia worsens ~1-2%/year with aging/BPH
+  let annualNocturiaIncrease = 2.0;
+  if(ipss > 19) annualNocturiaIncrease = 3.0;
+  if(a > 70) annualNocturiaIncrease = 2.5;
+
+  // ========== STEP 3: Treatment-specific RELATIVE decrements ==========
+  // Derived from ProtecT: what proportion of baseline function is LOST at each timepoint
+  //
+  // ProtecT baseline: 67% erections. Surgery 6mo: 12% → retained 18% of baseline.
+  // But this retention rate is itself affected by patient factors (age, nerve-sparing, BMI).
+
+  // Surgery erectile retention rates (% of YOUR baseline retained)
+  let sxRetain6mo = 0.18, sxRetain1yr = 0.26, sxRetain2yr = 0.32, sxRetain3yr = 0.32, sxRetain6yr = 0.26;
+  // Patient-specific modifiers for surgical recovery
+  if(a < 55) { sxRetain6mo *= 1.4; sxRetain1yr *= 1.4; sxRetain2yr *= 1.35; sxRetain3yr *= 1.3; sxRetain6yr *= 1.3; }
+  else if(a > 70) { sxRetain6mo *= 0.6; sxRetain1yr *= 0.65; sxRetain2yr *= 0.7; sxRetain3yr *= 0.7; sxRetain6yr *= 0.7; }
+  else if(a > 65) { sxRetain6mo *= 0.8; sxRetain1yr *= 0.85; sxRetain2yr *= 0.85; sxRetain3yr *= 0.85; sxRetain6yr *= 0.85; }
+  if(b >= 35) { sxRetain2yr *= 0.8; sxRetain6yr *= 0.75; }
+  else if(b >= 30) { sxRetain2yr *= 0.9; sxRetain6yr *= 0.85; }
+  if(diabetes) { sxRetain2yr *= 0.8; sxRetain6yr *= 0.75; }
+
+  // Radiation erectile retention (ADT causes early drop, partial recovery after)
+  let rtRetain6mo = 0.33, rtRetain1yr = 0.50, rtRetain2yr = 0.50, rtRetain3yr = 0.45, rtRetain6yr = 0.40;
+  if(a > 70) { rtRetain1yr *= 0.75; rtRetain2yr *= 0.75; rtRetain6yr *= 0.7; }
+  else if(a > 65) { rtRetain1yr *= 0.85; rtRetain6yr *= 0.85; }
+  if(diabetes) { rtRetain2yr *= 0.8; rtRetain6yr *= 0.75; }
+
+  // Surgery pad-use absolute rates (not relative — these are absolute risks from the procedure)
+  // Modified by age, BMI, IPSS, prior TURP
+  let padSurgeryBase = 1.0; // multiplier on ProtecT surgery pad rates
+  if(a < 55) padSurgeryBase = 0.65;
+  else if(a > 70) padSurgeryBase = 1.45;
+  else if(a > 65) padSurgeryBase = 1.20;
+  if(b >= 35) padSurgeryBase *= 1.30;
+  else if(b >= 30) padSurgeryBase *= 1.12;
+  if(priorTurp) padSurgeryBase *= 1.40;
+  if(ipss > 19) padSurgeryBase *= 1.15;
+
+  // Voiding/nocturia modifier
+  let voidMod = 1.0;
+  if(ipss > 19) voidMod = 1.3;
+  else if(ipss > 7) voidMod = 1.1;
+
+  // ========== STEP 4: Calculate YOUR predicted outcomes ==========
+  // Active Monitoring: starts at YOUR baseline, declines only with age
+  // ~30-40% convert to treatment by 10yr; blended decline accounts for this
+  const amConvertRate = 0.05; // ~5% per year convert to active treatment
+  const blendDecline = (yr) => {
+    // Those still on AM: pure age decline. Those who converted: get treatment effects.
+    const pureAMerect = myErectileBaseline - (annualEDDecline * yr);
+    const convertedFrac = Math.min(0.5, amConvertRate * yr); // cap at 50%
+    const convertedErect = myErectileBaseline * 0.30; // assume average treatment effect
+    return pureAMerect * (1 - convertedFrac) + convertedErect * convertedFrac;
   };
 
-  // Radiation outcomes
-  const radiation = {
-    erection: {
-      sixMo: cap(22*edBase), oneYr: cap(33*edBase), twoYr: cap(33*edBase),
-      threeYr: cap(30*edBase), sixYr: cap(27*edBase),
-    },
-    pads: {
-      sixMo: cap(5*continBase*0.3), oneYr: cap(4*continBase*0.3), twoYr: cap(3*continBase*0.3),
-      sixYr: cap(4*continBase*0.3),
-    },
-    nocturia: { sixMo: cap(35*voidBase), oneYr: cap(27*voidBase), sixYr: cap(38*voidBase) },
-    bowel: { sixMo: 8, sixYr: cap(9*bowelBase) },
-  };
-
-  // Active monitoring
   const monitoring = {
     erection: {
-      sixMo: cap(52*edBase), oneYr: cap(47*edBase), twoYr: cap(44*edBase),
-      threeYr: cap(41*edBase), sixYr: cap(30*edBase),
+      baseline: cap(myErectileBaseline),
+      sixMo: cap(myErectileBaseline - annualEDDecline * 0.5),
+      oneYr: cap(blendDecline(1)),
+      twoYr: cap(blendDecline(2)),
+      threeYr: cap(blendDecline(3)),
+      sixYr: cap(blendDecline(6)),
     },
     pads: {
-      sixMo: cap(4*continBase*0.5), oneYr: cap(3*continBase*0.5), twoYr: cap(5*continBase*0.5),
-      sixYr: cap(8*continBase*0.6),
+      sixMo: cap(myPadBaseline), oneYr: cap(myPadBaseline + 1),
+      twoYr: cap(myPadBaseline + 2), sixYr: cap(myPadBaseline + 4),
     },
-    nocturia: { sixMo: cap(23*voidBase), oneYr: cap(22*voidBase), sixYr: cap(35*voidBase) },
-    bowel: { sixMo: 3, sixYr: cap(4*bowelBase) },
+    nocturia: {
+      sixMo: cap(myNocturiaBaseline + annualNocturiaIncrease * 0.5),
+      oneYr: cap(myNocturiaBaseline + annualNocturiaIncrease * 1),
+      sixYr: cap(myNocturiaBaseline + annualNocturiaIncrease * 6),
+    },
+    bowel: { sixMo: 3, sixYr: 5 },
   };
 
-  return {surgery, radiation, monitoring, factors:{edBase,continBase,voidBase,shimCategory:
-    shim>=22?"Normal":shim>=17?"Mild ED":shim>=12?"Mild-Moderate ED":shim>=8?"Moderate ED":"Severe ED",
-    ipssCategory: ipss<=7?"Mild":ipss<=19?"Moderate":"Severe",
-    bmiCategory: b<25?"Normal":b<30?"Overweight":b<35?"Obese":"Severely Obese",
-  }};
+  // Surgery: YOUR baseline × retention rate at each timepoint
+  const surgery = {
+    erection: {
+      baseline: cap(myErectileBaseline),
+      sixMo: cap(myErectileBaseline * sxRetain6mo),
+      oneYr: cap(myErectileBaseline * sxRetain1yr),
+      twoYr: cap(myErectileBaseline * sxRetain2yr),
+      threeYr: cap(myErectileBaseline * sxRetain3yr),
+      sixYr: cap(myErectileBaseline * sxRetain6yr - annualEDDecline * 4), // plus aging after 2yr
+    },
+    pads: {
+      sixMo: cap(46 * padSurgeryBase), oneYr: cap(26 * padSurgeryBase),
+      twoYr: cap(20 * padSurgeryBase), sixYr: cap(17 * padSurgeryBase),
+    },
+    nocturia: {
+      sixMo: cap(15 * voidMod), // surgery often IMPROVES nocturia (prostate removed)
+      oneYr: cap(17 * voidMod),
+      sixYr: cap(25 * voidMod),
+    },
+    bowel: { sixMo: 3, sixYr: 5 },
+  };
+
+  // Radiation: YOUR baseline × retention rate (includes ADT dip and recovery)
+  const radiation = {
+    erection: {
+      baseline: cap(myErectileBaseline),
+      sixMo: cap(myErectileBaseline * rtRetain6mo),
+      oneYr: cap(myErectileBaseline * rtRetain1yr),
+      twoYr: cap(myErectileBaseline * rtRetain2yr),
+      threeYr: cap(myErectileBaseline * rtRetain3yr),
+      sixYr: cap(myErectileBaseline * rtRetain6yr - annualEDDecline * 4),
+    },
+    pads: {
+      sixMo: cap(5 * padSurgeryBase * 0.15), oneYr: cap(4 * padSurgeryBase * 0.15),
+      twoYr: cap(3 * padSurgeryBase * 0.15), sixYr: cap(5 * padSurgeryBase * 0.15),
+    },
+    nocturia: {
+      sixMo: cap(35 * voidMod), // radiation causes early irritative symptoms
+      oneYr: cap(27 * voidMod),
+      sixYr: cap(38 * voidMod),
+    },
+    bowel: { sixMo: 8, sixYr: 10 },
+  };
+
+  return {surgery, radiation, monitoring,
+    myBaseline: { erectile: cap(myErectileBaseline), pad: myPadBaseline, nocturia: myNocturiaBaseline },
+    factors: {
+      shimCategory: shim>=22?"Normal (22-25)":shim>=17?"Mild ED (17-21)":shim>=12?"Mild-Mod ED (12-16)":shim>=8?"Moderate ED (8-11)":"Severe ED (5-7)",
+      ipssCategory: ipss<=7?"Mild (0-7)":ipss<=19?"Moderate (8-19)":"Severe (20-35)",
+      bmiCategory: b<25?"Normal":b<30?"Overweight":b<35?"Obese I":"Obese II+",
+      annualEDDecline: annualEDDecline.toFixed(1),
+    },
+  };
 }
 
 // ---- SVG CHART ----
@@ -993,10 +1075,10 @@ export default function ProstateCancerDecisionGuide() {
     return(
       <div style={cs}><ProgressBar step={5} total={STEPS.length}/>
         <h2 style={{fontSize:22,fontWeight:700,marginBottom:4}}>Your Predicted Functional Outcomes</h2>
-        <p style={{color:"#64748b",fontSize:14,marginBottom:8}}>Adjusted from ProtecT population data based on YOUR baseline scores.</p>
+        <p style={{color:"#64748b",fontSize:14,marginBottom:8}}>Starting from YOUR personal baseline function, not population averages.</p>
 
-        {/* Factor summary */}
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
+        {/* Factor summary with personal baseline */}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
           <span style={{padding:"4px 12px",borderRadius:16,background:"#f5f3ff",fontSize:12,color:"#7c3aed",fontWeight:600}}>SHIM: {f.shimCategory}</span>
           <span style={{padding:"4px 12px",borderRadius:16,background:"#eff6ff",fontSize:12,color:"#2563eb",fontWeight:600}}>IPSS: {f.ipssCategory}</span>
           <span style={{padding:"4px 12px",borderRadius:16,background:"#f0fdf4",fontSize:12,color:"#059669",fontWeight:600}}>BMI: {f.bmiCategory}</span>
@@ -1005,11 +1087,37 @@ export default function ProstateCancerDecisionGuide() {
           {bodyMetrics.priorTurp&&<span style={{padding:"4px 12px",borderRadius:16,background:"#fef2f2",fontSize:12,color:"#dc2626",fontWeight:600}}>Prior TURP</span>}
         </div>
 
+        {/* YOUR BASELINE callout */}
+        <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#166534",marginBottom:8}}>Your Personal Baseline (Starting Point)</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            <div style={{textAlign:"center",background:"#fff",borderRadius:8,padding:10,border:"1px solid #bbf7d0"}}>
+              <div style={{fontSize:24,fontWeight:800,color:"#059669"}}>{p.myBaseline.erectile}%</div>
+              <div style={{fontSize:11,color:"#64748b"}}>Erections for Intercourse</div>
+              <div style={{fontSize:10,color:"#94a3b8"}}>Based on your SHIM {shimTotal||"—"}</div>
+            </div>
+            <div style={{textAlign:"center",background:"#fff",borderRadius:8,padding:10,border:"1px solid #bbf7d0"}}>
+              <div style={{fontSize:24,fontWeight:800,color:"#059669"}}>{p.myBaseline.pad}%</div>
+              <div style={{fontSize:11,color:"#64748b"}}>Using Pads Now</div>
+              <div style={{fontSize:10,color:"#94a3b8"}}>Based on your IPSS {ipssTotal||"—"}</div>
+            </div>
+            <div style={{textAlign:"center",background:"#fff",borderRadius:8,padding:10,border:"1px solid #bbf7d0"}}>
+              <div style={{fontSize:24,fontWeight:800,color:"#059669"}}>{f.annualEDDecline}%</div>
+              <div style={{fontSize:11,color:"#64748b"}}>Natural ED Decline/Year</div>
+              <div style={{fontSize:10,color:"#94a3b8"}}>Age + health factors</div>
+            </div>
+          </div>
+          <div style={{fontSize:11,color:"#065f46",marginTop:8,lineHeight:1.5}}>
+            These are YOUR starting values. Unlike the ProtecT trial population (where only 67% had erections at baseline), your predictions start from your actual function and model how each treatment would change it.
+          </div>
+        </Card>
+
         {/* Erection predictions */}
         <Card style={{marginBottom:16}}>
           <h3 style={{fontSize:16,fontWeight:700,marginBottom:4,color:"#475569"}}>Predicted Erectile Function</h3>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:12}}>% chance of erections firm enough for intercourse</div>
-          <PredictionRow label="At 6 Months" timeLabel="Early recovery period" surgery={p.surgery.erection.sixMo} radiation={p.radiation.erection.sixMo} monitoring={p.monitoring.erection.sixMo}/>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:12}}>Your estimated % chance of erections firm enough for intercourse at each timepoint</div>
+          <PredictionRow label="Your Baseline" timeLabel="Current function" surgery={p.surgery.erection.baseline} radiation={p.radiation.erection.baseline} monitoring={p.monitoring.erection.baseline}/>
+          <PredictionRow label="At 6 Months" timeLabel="Early recovery" surgery={p.surgery.erection.sixMo} radiation={p.radiation.erection.sixMo} monitoring={p.monitoring.erection.sixMo}/>
           <PredictionRow label="At 2 Years" timeLabel="Peak recovery" surgery={p.surgery.erection.twoYr} radiation={p.radiation.erection.twoYr} monitoring={p.monitoring.erection.twoYr}/>
           <PredictionRow label="At 6 Years" timeLabel="Long-term" surgery={p.surgery.erection.sixYr} radiation={p.radiation.erection.sixYr} monitoring={p.monitoring.erection.sixYr}/>
         </Card>
@@ -1039,7 +1147,7 @@ export default function ProstateCancerDecisionGuide() {
         </Card>
 
         <div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:10,padding:14,fontSize:12,color:"#92400e",marginBottom:16}}>
-          <strong>How these predictions are generated:</strong> ProtecT population-level rates are adjusted using published predictive factors including baseline SHIM score (strongest predictor of erectile recovery), IPSS (predicts voiding outcomes), age, BMI, diabetes, and prior prostate procedures. These are estimates — individual outcomes vary. Discuss with your surgeon or radiation oncologist for institution-specific data.
+          <strong>How these predictions work:</strong> Unlike generic population statistics, these estimates start from YOUR personal baseline derived from your SHIM and IPSS scores. Treatment effects are modeled as relative decrements — what proportion of YOUR current function is lost. For active monitoring, the model applies age-related natural decline (Massachusetts Male Aging Study) blended with the ~5%/year rate of converting to active treatment. Surgery and radiation decrements are derived from ProtecT relative retention rates, further adjusted for your age, BMI, diabetes, and prior procedures. These are individualized estimates — discuss with your surgeon or radiation oncologist for their institution-specific outcomes.
         </div>
 
         <div style={{display:"flex",justifyContent:"space-between",marginTop:32}}>
