@@ -627,7 +627,7 @@ export default function ProstateCancerDecisionGuide() {
   const [ipss,setIpss]=useState({incomplete:-1,frequency:-1,intermittency:-1,urgency:-1,weakstream:-1,straining:-1,nocturia:-1,qol:-1});
   const [shim,setShim]=useState({confidence:-1,firmness:-1,maintain:-1,difficulty:-1,satisfaction:-1});
   const [bodyMetrics,setBodyMetrics]=useState({heightFt:"",heightIn:"",weightLbs:"",diabetes:false,priorTurp:false,sexuallyActive:true});
-  const [priorities,setPriorities]=useState({avoidSideEffects:2,certaintyOfCure:2,minimizeRecovery:2,preserveErections:2,avoidOngoing:2,preserveBowel:2});
+  const [priorities,setPriorities]=useState({avoidSideEffects:4,certaintyOfCure:4,minimizeRecovery:4,preserveErections:4,avoidOngoing:4,preserveBowel:4});
   const [expandedTreatment,setExpandedTreatment]=useState(null);
   const [activeOutcome,setActiveOutcome]=useState("erectileFunction");
 
@@ -905,7 +905,7 @@ export default function ProstateCancerDecisionGuide() {
 
   // ==== STEP 3: PRIORITIES (Point Allocation) ====
   if(step===3){
-    const TOTAL_POINTS = 12;
+    const TOTAL_POINTS = 24;
     const priorityLabels = {
       avoidSideEffects: { label: "Avoiding treatment side effects", icon: "🛡️", desc: "Minimizing risks of incontinence, ED, bowel changes" },
       certaintyOfCure: { label: "Maximum certainty of cancer cure", icon: "🎯", desc: "Highest probability the cancer is completely eliminated" },
@@ -920,13 +920,13 @@ export default function ProstateCancerDecisionGuide() {
     const adjustPriority = (key, delta) => {
       const newVal = priorities[key] + delta;
       if (newVal < 0) return; // can't go below 0
-      if (newVal > 6) return; // can't put more than 6 on one item
+      if (newVal > 12) return; // can't put more than 12 on one item
       if (delta > 0 && remaining <= 0) return; // no points left
       setPriorities({...priorities, [key]: newVal});
     };
 
     const resetPriorities = () => {
-      setPriorities({avoidSideEffects:2,certaintyOfCure:2,minimizeRecovery:2,preserveErections:2,avoidOngoing:2,preserveBowel:2});
+      setPriorities({avoidSideEffects:4,certaintyOfCure:4,minimizeRecovery:4,preserveErections:4,avoidOngoing:4,preserveBowel:4});
     };
 
     // Sort by current allocation for visual ranking
@@ -991,11 +991,11 @@ export default function ProstateCancerDecisionGuide() {
                     −
                   </button>
                   <div style={{width:36,textAlign:"center",fontSize:20,fontWeight:800,color: val > 0 ? color : "#cbd5e1"}}>{val}</div>
-                  <button onClick={()=>adjustPriority(key,1)} disabled={remaining<=0||val>=6}
+                  <button onClick={()=>adjustPriority(key,1)} disabled={remaining<=0||val>=12}
                     style={{width:32,height:32,borderRadius:8,border:"1px solid #e2e8f0",
-                      background:remaining>0&&val<6?"#fff":"#f1f5f9",
-                      cursor:remaining>0&&val<6?"pointer":"default",fontSize:18,fontWeight:700,
-                      color:remaining>0&&val<6?color:"#cbd5e1",
+                      background:remaining>0&&val<12?"#fff":"#f1f5f9",
+                      cursor:remaining>0&&val<12?"pointer":"default",fontSize:18,fontWeight:700,
+                      color:remaining>0&&val<12?color:"#cbd5e1",
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
                     +
                   </button>
