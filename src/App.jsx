@@ -590,8 +590,55 @@ export default function ProstateCancerDecisionGuide() {
       details:{approach:"Removal of entire prostate, usually robotically. May include pelvic lymph node dissection.",tenYearSurvival:"~95-99% (varies by risk)",recovery:"1-3 weeks off work; 4-6 weeks full activity",considerations:["Definitive pathologic staging","PSA becomes undetectable","Radiation can be added later if needed","Nerve-sparing preserves erections in many men","Younger, healthier patients recover better"]}},
     radiation:{name:"Radiation Therapy",icon:"☢️",color:"#f59e0b",shortDesc:"External beam radiation ± brachytherapy ± hormone therapy",suited:["Very Low","Low","Favorable Intermediate","Unfavorable Intermediate","High","Very High"],
       details:{approach:"EBRT (5-40 sessions) and/or brachytherapy. Often combined with ADT for intermediate/high-risk.",tenYearSurvival:"~95-99% (comparable to surgery)",recovery:"Most continue normal activities during treatment",considerations:["Non-invasive — no incision","SBRT (5 sessions) increasingly standard for low/intermediate","ADT typically 6-36 months for intermediate/high-risk","Salvage surgery after RT is technically challenging","Side effects develop gradually over months-years"]}},
-    focalTherapy:{name:"Focal Therapy",icon:"🎯",color:"#10b981",shortDesc:"Targeted treatment of the cancer focus only",suited:["Very Low","Low","Favorable Intermediate"],
-      details:{approach:"Treats only the cancer area (HIFU, cryotherapy, laser, IRE). Preserves healthy tissue.",tenYearSurvival:"Limited long-term data; ~90-95% failure-free at 5 yr",recovery:"Outpatient; return to activity in 1-2 weeks",considerations:["Emerging — long-term data still maturing","Not in ProtecT (no level 1 comparative data)","Best for unilateral MRI-visible lesions","Can be repeated or followed by definitive treatment","Requires high-quality MRI and targeted biopsy"]}},
+    focalTherapy:{name:"Focal Therapy",icon:"🎯",color:"#10b981",shortDesc:"Targeted treatment of the cancer focus only (HIFU, IRE, cryotherapy)",suited:["Very Low","Low","Favorable Intermediate","Unfavorable Intermediate"],
+      details:{
+        approach:"Treats only the cancer area within the prostate, preserving healthy tissue. Technologies include HIFU (high-intensity focused ultrasound), IRE (irreversible electroporation / Nanoknife), cryotherapy, and laser ablation.",
+        tenYearSurvival:"No 10-year data available. Best available: 7-yr failure-free survival 69% (HEAT Registry, n=1,379)",
+        recovery:"Outpatient or overnight; return to activity in 1-2 weeks",
+        focalTrialData: {
+          heat: {
+            name: "HEAT Registry (Reddy et al, Eur Urol 2022)",
+            n: 1379,
+            design: "Multi-institute UK registry, focal HIFU, 15-year experience",
+            population: "65% intermediate-risk, 28% high-risk, median age 66",
+            ffs7yr: { all: 69, low: 88, intermediate: 68, high: 65 },
+            salvageFree7yr: 75,
+            adtFree7yr: 92,
+            metsFree7yr: 100,
+            pcSpecificSurvival7yr: 100,
+            overallSurvival7yr: 97,
+            retreatmentRate: 18,
+            salvageWholeGland: 7,
+          },
+          hifi: {
+            name: "HIFI Trial (Ploussard et al, Eur Urol 2025)",
+            n: 3328,
+            design: "Prospective nonrandomized, HIFU vs RP, 46 centers in France",
+            population: "Low/intermediate-risk; HIFU median age 74.7, RP 65.1",
+            stfs30mo: { hifu: 90, rp: 86 },
+            noninferiority: "HR 0.71 (95% CI 0.52-0.97, p=0.008) — noninferiority demonstrated",
+            metastasis: "0 in either group at 30 months",
+            continence12mo: "HIFU 29% deterioration vs RP 44%",
+            iief5drop: "HIFU decrease of 7 pts vs RP decrease of 13 pts",
+          },
+          ireImmuno: {
+            name: "IRE-IMMUNO (Geboers et al, BJU Int 2025)",
+            n: 30,
+            design: "Prospective immune monitoring, IRE vs RARP",
+            finding: "IRE depleted regulatory T-cells (p=0.0001) and activated anti-tumor CD4+/CD8+ T-cells. Prostate-specific T-cell responses in 4/8 patients. Suggests IRE may have immunomodulatory benefits not seen with surgery.",
+          },
+        },
+        considerations:[
+          "CRITICAL: No randomized comparative trial vs surgery/RT with 10+ year follow-up",
+          "HEAT Registry: 7-yr failure-free survival 69% in 1,379 patients (largest focal therapy series); 7-yr metastasis-free survival 100%, PC death <0.1%",
+          "HIFI Trial: First prospective comparison — HIFU noninferior to surgery at 30 months (STFS 90% vs 86%, HR 0.71), with better continence and sexual function",
+          "IRE-IMMUNO: IRE may activate anti-tumor immunity — depletes regulatory T-cells and induces prostate-specific T-cell responses (exploratory, n=30)",
+          "~18-20% need a repeat focal session; ~7% need salvage whole-gland treatment at 7 years",
+          "Best for MRI-visible, unilateral or bilateral lesions with GG 1-3 disease",
+          "Can be followed by definitive treatment if needed — does not 'burn bridges'",
+          "Not yet standard of care in all guidelines — growing evidence but long-term data gap remains the key limitation",
+        ],
+      }},
   }),[]);
 
   function scoreTreatments(){
@@ -630,8 +677,8 @@ export default function ProstateCancerDecisionGuide() {
     <div style={cs}><ProgressBar step={0} total={STEPS.length}/>
       <div style={{textAlign:"center",padding:"40px 0"}}>
         <div style={{fontSize:48,marginBottom:16}}>🩺</div>
-        <h1 style={{fontSize:28,fontWeight:700,marginBottom:8}}>Prostate Cancer Treatment Decision Guide</h1>
-        <p style={{color:"#64748b",fontSize:16,maxWidth:520,margin:"0 auto 8px"}}>A personalized tool using your baseline function scores and ProtecT trial data to predict how treatment may affect YOUR quality of life.</p>
+        <h1 style={{fontSize:28,fontWeight:700,marginBottom:8}}>Dr. Schurhamer's Prostate Cancer Treatment Guide</h1>
+        <p style={{color:"#64748b",fontSize:16,maxWidth:520,margin:"0 auto 8px"}}>A personalized decision aid using validated instruments, ProtecT trial outcomes, and contemporary focal therapy data to help you understand how each treatment may affect YOUR quality of life and cancer control.</p>
         <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:16,margin:"20px auto",maxWidth:520,fontSize:13,color:"#1e40af",textAlign:"left"}}>
           <strong>New — Personalized Predictions:</strong> Enter your IPSS (urinary symptoms), SHIM (sexual function), and BMI to get individualized outcome estimates adjusted from the ProtecT trial's 1,643-patient dataset.
         </div>
@@ -856,7 +903,66 @@ export default function ProstateCancerDecisionGuide() {
                       </div>
                     </div>
                   )}
-                  {t.key==="focalTherapy"&&<div style={{background:"#fefce8",border:"1px solid #fef08a",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#854d0e"}}><strong>Focal therapy was not included in the ProtecT trial.</strong> Personalized predictions are based on published single-arm series reporting ~80-90% erection preservation and ~95% continence at 1-2 years.</div>}
+                  {t.key==="focalTherapy"&&t.details.focalTrialData&&(
+                    <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:16,marginBottom:16}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                        <span style={{background:"#059669",color:"#fff",fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:8}}>FOCAL THERAPY EVIDENCE</span>
+                      </div>
+
+                      {/* HEAT Registry */}
+                      <div style={{background:"#fff",border:"1px solid #d1fae5",borderRadius:8,padding:12,marginBottom:10}}>
+                        <div style={{fontWeight:700,fontSize:13,color:"#065f46",marginBottom:4}}>HEAT Registry — {t.details.focalTrialData.heat.n.toLocaleString()} patients, focal HIFU</div>
+                        <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>{t.details.focalTrialData.heat.design}</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                          <div style={{background:"#f0fdf4",borderRadius:6,padding:8,textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{t.details.focalTrialData.heat.ffs7yr.all}%</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>7-yr Failure-Free</div>
+                          </div>
+                          <div style={{background:"#f0fdf4",borderRadius:6,padding:8,textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>100%</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>7-yr Mets-Free</div>
+                          </div>
+                          <div style={{background:"#f0fdf4",borderRadius:6,padding:8,textAlign:"center"}}>
+                            <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{t.details.focalTrialData.heat.salvageFree7yr}%</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>7-yr Salvage-Free</div>
+                          </div>
+                        </div>
+                        <div style={{fontSize:11,color:"#64748b",marginTop:6}}>By D'Amico risk: Low {t.details.focalTrialData.heat.ffs7yr.low}% | Intermediate {t.details.focalTrialData.heat.ffs7yr.intermediate}% | High {t.details.focalTrialData.heat.ffs7yr.high}% FFS at 7 yr. ~{t.details.focalTrialData.heat.retreatmentRate}% needed repeat focal; ~{t.details.focalTrialData.heat.salvageWholeGland}% needed salvage whole-gland Tx.</div>
+                      </div>
+
+                      {/* HIFI Trial */}
+                      <div style={{background:"#fff",border:"1px solid #d1fae5",borderRadius:8,padding:12,marginBottom:10}}>
+                        <div style={{fontWeight:700,fontSize:13,color:"#065f46",marginBottom:4}}>HIFI Trial — {t.details.focalTrialData.hifi.n.toLocaleString()} patients, HIFU vs Surgery</div>
+                        <div style={{fontSize:12,color:"#64748b",marginBottom:6}}>{t.details.focalTrialData.hifi.design}</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                          <div style={{background:"#f0fdf4",borderRadius:6,padding:8,textAlign:"center"}}>
+                            <div style={{fontSize:16,fontWeight:800,color:"#059669"}}>90% vs 86%</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>30-mo Salvage-Free (HIFU vs RP)</div>
+                          </div>
+                          <div style={{background:"#f0fdf4",borderRadius:6,padding:8,textAlign:"center"}}>
+                            <div style={{fontSize:16,fontWeight:800,color:"#059669"}}>Noninferior</div>
+                            <div style={{fontSize:10,color:"#64748b"}}>{t.details.focalTrialData.hifi.noninferiority}</div>
+                          </div>
+                        </div>
+                        <div style={{fontSize:11,color:"#64748b",marginTop:6}}>{t.details.focalTrialData.hifi.continence12mo}. IIEF-5: {t.details.focalTrialData.hifi.iief5drop}. {t.details.focalTrialData.hifi.metastasis}.</div>
+                      </div>
+
+                      {/* IRE-IMMUNO */}
+                      <div style={{background:"#fff",border:"1px solid #d1fae5",borderRadius:8,padding:12,marginBottom:10}}>
+                        <div style={{fontWeight:700,fontSize:13,color:"#065f46",marginBottom:4}}>IRE-IMMUNO Study — {t.details.focalTrialData.ireImmuno.n} patients, IRE vs RARP</div>
+                        <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>{t.details.focalTrialData.ireImmuno.design}</div>
+                        <div style={{fontSize:12,color:"#065f46"}}>{t.details.focalTrialData.ireImmuno.finding}</div>
+                      </div>
+
+                      {/* Critical caveat */}
+                      <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:12,marginTop:4}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"#991b1b",marginBottom:4}}>IMPORTANT: Long-Term Evidence Gap</div>
+                        <div style={{fontSize:12,color:"#991b1b",lineHeight:1.6}}>
+                          No randomized trial comparing focal therapy to surgery or radiation exists with 10+ year follow-up. The HEAT Registry's median follow-up is 32 months (7-year data available for only 24% of the cohort). The HIFI Trial has only 30 months of follow-up and was non-randomized with significant age differences between groups. The IRE-IMMUNO study is exploratory (n=30). While medium-term outcomes are encouraging, the long-term cancer control equivalence to definitive whole-gland treatment remains unproven. Patients choosing focal therapy should commit to rigorous long-term surveillance with PSA, MRI, and protocol biopsies.
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Oncologic outcomes by grade group */}
                   {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && t.key !== "focalTherapy" && (
