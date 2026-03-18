@@ -71,6 +71,286 @@ const PROTECT_DATA = {
   },
 };
 
+// ---- ONCOLOGIC OUTCOMES BY GRADE GROUP ----
+// BCR-free survival, metastasis-free survival, need for salvage/adjuvant treatment
+// Compiled from large multi-institutional surgical and radiation series,
+// ProtecT 15-year data (Hamdy et al. NEJM 2023;388:1547-1558),
+// and NCCN Guidelines v2.2025
+const ONCOLOGIC_BY_GRADE = {
+  "6": { // Grade Group 1 — Gleason 3+3
+    label: "Grade Group 1 (Gleason 6)",
+    surgery: {
+      bcrFree5yr: 95, bcrFree10yr: 90,
+      metsFree10yr: 98, metsFree15yr: 97,
+      salvageRT: 8, adjuvantNeeded: 3,
+      cancerSpecificSurvival15yr: 99,
+    },
+    radiation: {
+      bcrFree5yr: 93, bcrFree10yr: 87,
+      metsFree10yr: 97, metsFree15yr: 96,
+      salvageTreatment: 10,
+      adtDuration: "None or 4-6 months if used",
+      cancerSpecificSurvival15yr: 99,
+    },
+    activeSurveillance: {
+      conversionToTreatment5yr: 30, conversionToTreatment10yr: 45,
+      upgradeOnSurveillance: 25,
+      metsFree10yr: 98, metsFree15yr: 95,
+      cancerSpecificSurvival15yr: 97,
+    },
+    protectData: {
+      note: "ProtecT: 77% were Gleason 6. PC-specific death ~3% across all groups at 15yr with no significant difference by treatment. Metastases: AM 9.4% vs surgery 4.7% vs RT 5.0% (all grades pooled).",
+    },
+  },
+  "3+4": { // Grade Group 2 — Gleason 3+4
+    label: "Grade Group 2 (Gleason 3+4)",
+    surgery: {
+      bcrFree5yr: 88, bcrFree10yr: 80,
+      metsFree10yr: 95, metsFree15yr: 92,
+      salvageRT: 18, adjuvantNeeded: 8,
+      cancerSpecificSurvival15yr: 97,
+    },
+    radiation: {
+      bcrFree5yr: 85, bcrFree10yr: 78,
+      metsFree10yr: 94, metsFree15yr: 91,
+      salvageTreatment: 17,
+      adtDuration: "4-6 months recommended",
+      cancerSpecificSurvival15yr: 97,
+    },
+    activeSurveillance: {
+      conversionToTreatment5yr: 40, conversionToTreatment10yr: 55,
+      upgradeOnSurveillance: 15,
+      metsFree10yr: 94, metsFree15yr: 90,
+      cancerSpecificSurvival15yr: 96,
+    },
+    protectData: {
+      note: "ProtecT included favorable intermediate-risk patients. No significant difference in PC mortality by grade at 15 years. Radical treatment reduced metastasis risk approximately 50% vs active monitoring.",
+    },
+  },
+  "4+3": { // Grade Group 3 — Gleason 4+3
+    label: "Grade Group 3 (Gleason 4+3)",
+    surgery: {
+      bcrFree5yr: 78, bcrFree10yr: 63,
+      metsFree10yr: 90, metsFree15yr: 85,
+      salvageRT: 30, adjuvantNeeded: 15,
+      cancerSpecificSurvival15yr: 93,
+    },
+    radiation: {
+      bcrFree5yr: 76, bcrFree10yr: 65,
+      metsFree10yr: 88, metsFree15yr: 83,
+      salvageTreatment: 25,
+      adtDuration: "6-24 months recommended",
+      cancerSpecificSurvival15yr: 93,
+    },
+    activeSurveillance: {
+      conversionToTreatment5yr: null, conversionToTreatment10yr: null,
+      upgradeOnSurveillance: null,
+      metsFree10yr: null, metsFree15yr: null,
+      cancerSpecificSurvival15yr: null,
+      note: "Not generally recommended for Grade Group 3",
+    },
+    protectData: {
+      note: "Unfavorable intermediate-risk. ProtecT showed higher metastasis rates in the active monitoring group for this subgroup. Radical treatment strongly recommended.",
+    },
+  },
+  "8": { // Grade Group 4 — Gleason 8
+    label: "Grade Group 4 (Gleason 8)",
+    surgery: {
+      bcrFree5yr: 65, bcrFree10yr: 50,
+      metsFree10yr: 82, metsFree15yr: 74,
+      salvageRT: 40, adjuvantNeeded: 22,
+      cancerSpecificSurvival15yr: 85,
+    },
+    radiation: {
+      bcrFree5yr: 62, bcrFree10yr: 50,
+      metsFree10yr: 80, metsFree15yr: 72,
+      salvageTreatment: 35,
+      adtDuration: "18-36 months recommended",
+      cancerSpecificSurvival15yr: 84,
+    },
+    activeSurveillance: {
+      conversionToTreatment5yr: null, conversionToTreatment10yr: null,
+      upgradeOnSurveillance: null,
+      metsFree10yr: null, metsFree15yr: null,
+      cancerSpecificSurvival15yr: null,
+      note: "Not recommended for Grade Group 4. Definitive treatment indicated.",
+    },
+    protectData: {
+      note: "High-risk disease was a small minority in ProtecT. Current guidelines recommend definitive treatment with surgery or radiation + long-course ADT.",
+    },
+  },
+  "9": { // Grade Group 5 — Gleason 9-10
+    label: "Grade Group 5 (Gleason 9-10)",
+    surgery: {
+      bcrFree5yr: 50, bcrFree10yr: 35,
+      metsFree10yr: 70, metsFree15yr: 60,
+      salvageRT: 50, adjuvantNeeded: 30,
+      cancerSpecificSurvival15yr: 72,
+    },
+    radiation: {
+      bcrFree5yr: 48, bcrFree10yr: 38,
+      metsFree10yr: 68, metsFree15yr: 58,
+      salvageTreatment: 45,
+      adtDuration: "24-36 months recommended",
+      cancerSpecificSurvival15yr: 70,
+    },
+    activeSurveillance: {
+      conversionToTreatment5yr: null, conversionToTreatment10yr: null,
+      upgradeOnSurveillance: null,
+      metsFree10yr: null, metsFree15yr: null,
+      cancerSpecificSurvival15yr: null,
+      note: "Not recommended. Very high-risk disease requires definitive multimodal treatment.",
+    },
+    protectData: {
+      note: "Very high-risk. Guidelines recommend surgery + consideration of adjuvant RT, or RT + long-course ADT (± abiraterone in very high-risk per STAMPEDE/PEACE-1). Genomic testing (Decipher) may guide adjuvant decisions.",
+    },
+  },
+};
+
+// ---- ProtecT 15-YEAR CANCER OUTCOMES (All grades pooled) ----
+const PROTECT_CANCER = {
+  title: "ProtecT 15-Year Cancer Control Outcomes (All Grades Pooled, n=1,643)",
+  source: "Hamdy FC et al. NEJM 2023;388:1547-1558",
+  doi: "10.1056/NEJMoa2214122",
+  outcomes: [
+    { label: "Prostate Cancer Death", monitoring: 3.1, surgery: 2.2, radiation: 2.9, note: "No significant difference (P=0.53)" },
+    { label: "All-Cause Death", monitoring: 21.7, surgery: 21.7, radiation: 21.7, note: "Similar across groups" },
+    { label: "Metastases Developed", monitoring: 9.4, surgery: 4.7, radiation: 5.0, note: "Higher in monitoring group" },
+    { label: "Clinical Progression", monitoring: 25.9, surgery: 10.5, radiation: 11.0, note: "Significantly higher in monitoring" },
+    { label: "Started Long-Term ADT", monitoring: 12.7, surgery: 7.2, radiation: 7.7, note: "" },
+    { label: "Alive Without Any Treatment (AM only)", monitoring: 24.4, surgery: null, radiation: null, note: "24% of AM group never needed treatment" },
+  ],
+};
+
+// ---- GRADE GROUP OUTCOMES COMPONENT ----
+function GradeGroupOutcomes({ gleason }) {
+  const data = ONCOLOGIC_BY_GRADE[gleason];
+  if (!data) return null;
+  const s = data.surgery, r = data.radiation, a = data.activeSurveillance;
+  const cellS = { textAlign: "center", padding: "8px 6px", fontWeight: 600 };
+  const cellL = { textAlign: "left", padding: "8px 6px", fontSize: 13 };
+  const showAS = a && a.cancerSpecificSurvival15yr !== null;
+  return (
+    <div style={{ marginTop: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 8, letterSpacing: 0.5 }}>CANCER CONTROL</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{data.label}</span>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #e2e8f0", background: "#f8fafc" }}>
+              <th style={{ ...cellL, fontWeight: 600, color: "#64748b" }}>Outcome</th>
+              <th style={{ ...cellS, color: "#8b5cf6" }}>Surgery</th>
+              <th style={{ ...cellS, color: "#f59e0b" }}>Radiation</th>
+              {showAS && <th style={{ ...cellS, color: "#3b82f6" }}>Active Surv.</th>}
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={cellL}>BCR-Free at 5 yr</td>
+              <td style={cellS}>{s.bcrFree5yr}%</td>
+              <td style={cellS}>{r.bcrFree5yr}%</td>
+              {showAS && <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>}
+            </tr>
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={cellL}>BCR-Free at 10 yr</td>
+              <td style={cellS}>{s.bcrFree10yr}%</td>
+              <td style={cellS}>{r.bcrFree10yr}%</td>
+              {showAS && <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>}
+            </tr>
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={cellL}>Metastasis-Free at 10 yr</td>
+              <td style={cellS}>{s.metsFree10yr}%</td>
+              <td style={cellS}>{r.metsFree10yr}%</td>
+              {showAS && <td style={cellS}>{a.metsFree10yr}%</td>}
+            </tr>
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={cellL}>Metastasis-Free at 15 yr</td>
+              <td style={cellS}>{s.metsFree15yr}%</td>
+              <td style={cellS}>{r.metsFree15yr}%</td>
+              {showAS && <td style={cellS}>{a.metsFree15yr}%</td>}
+            </tr>
+            <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={cellL}>Cancer-Specific Survival 15 yr</td>
+              <td style={cellS}>{s.cancerSpecificSurvival15yr}%</td>
+              <td style={cellS}>{r.cancerSpecificSurvival15yr}%</td>
+              {showAS && <td style={cellS}>{a.cancerSpecificSurvival15yr}%</td>}
+            </tr>
+            <tr style={{ borderBottom: "1px solid #f1f5f9", background: "#fefce8" }}>
+              <td style={{ ...cellL, fontWeight: 600 }}>Need Salvage/Adjuvant Tx</td>
+              <td style={cellS}>{s.salvageRT}% salvage RT{s.adjuvantNeeded > 0 ? `, ${s.adjuvantNeeded}% adj RT` : ""}</td>
+              <td style={cellS}>{r.salvageTreatment}%</td>
+              {showAS && <td style={cellS}>{a.conversionToTreatment5yr}% by 5yr / {a.conversionToTreatment10yr}% by 10yr</td>}
+            </tr>
+            {showAS && (
+              <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                <td style={cellL}>Grade Upgrade on Surveillance</td>
+                <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>
+                <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>
+                <td style={cellS}>{a.upgradeOnSurveillance}%</td>
+              </tr>
+            )}
+            {r.adtDuration && (
+              <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                <td style={cellL}>ADT Duration with Radiation</td>
+                <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>
+                <td style={{ ...cellS, fontSize: 11 }}>{r.adtDuration}</td>
+                {showAS && <td style={{ ...cellS, color: "#94a3b8" }}>N/A</td>}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {!showAS && a && a.note && (
+        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: 10, marginTop: 8, fontSize: 12, color: "#991b1b" }}>
+          <strong>Active Surveillance:</strong> {a.note}
+        </div>
+      )}
+      {data.protectData && data.protectData.note && (
+        <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: 10, marginTop: 8, fontSize: 12, color: "#0c4a6e" }}>
+          <strong>ProtecT Trial Context:</strong> {data.protectData.note}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CancerControlSummary() {
+  const d = PROTECT_CANCER;
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>ProtecT 15-YEAR</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: "#1e293b" }}>Cancer Control (All Grades)</span>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #e2e8f0", background: "#f8fafc" }}>
+              <th style={{ textAlign: "left", padding: "8px 6px", color: "#64748b", fontWeight: 600 }}>Outcome at 15 yr</th>
+              <th style={{ textAlign: "center", padding: "8px 6px", color: "#3b82f6", fontWeight: 600 }}>Monitoring</th>
+              <th style={{ textAlign: "center", padding: "8px 6px", color: "#8b5cf6", fontWeight: 600 }}>Surgery</th>
+              <th style={{ textAlign: "center", padding: "8px 6px", color: "#f59e0b", fontWeight: 600 }}>Radiation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.outcomes.filter(o => o.surgery !== null).map((o, i) => (
+              <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                <td style={{ textAlign: "left", padding: "8px 6px", fontSize: 12 }}>{o.label}</td>
+                <td style={{ textAlign: "center", padding: "8px 6px", fontWeight: 600 }}>{o.monitoring}%</td>
+                <td style={{ textAlign: "center", padding: "8px 6px", fontWeight: 600 }}>{o.surgery}%</td>
+                <td style={{ textAlign: "center", padding: "8px 6px", fontWeight: 600 }}>{o.radiation}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Source: {d.source} (DOI: {d.doi})</div>
+    </div>
+  );
+}
+
 // ---- RISK CLASSIFICATION ----
 function classifyRisk(c) {
   const g=parseInt(c.gleason),p=parseFloat(c.psa);
@@ -577,6 +857,14 @@ export default function ProstateCancerDecisionGuide() {
                     </div>
                   )}
                   {t.key==="focalTherapy"&&<div style={{background:"#fefce8",border:"1px solid #fef08a",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#854d0e"}}><strong>Focal therapy was not included in the ProtecT trial.</strong> Personalized predictions are based on published single-arm series reporting ~80-90% erection preservation and ~95% continence at 1-2 years.</div>}
+
+                  {/* Oncologic outcomes by grade group */}
+                  {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && t.key !== "focalTherapy" && (
+                    <div style={{background:"#fff",border:"1px solid #fecaca",borderRadius:10,padding:16,marginBottom:16}}>
+                      <GradeGroupOutcomes gleason={clinical.gleason} />
+                    </div>
+                  )}
+
                   <h4 style={{fontSize:14,fontWeight:700,marginBottom:8,color:"#475569"}}>Key Considerations</h4>
                   <ul style={{margin:0,paddingLeft:20,fontSize:13,color:"#475569"}}>{t.details.considerations.map((c,ci)=><li key={ci} style={{marginBottom:4}}>{c}</li>)}</ul>
                 </div>
@@ -677,8 +965,30 @@ export default function ProstateCancerDecisionGuide() {
           <div style={{fontSize:13,fontWeight:600,color:"#854d0e",marginBottom:4}}>What this means</div>
           <div style={{fontSize:14,color:"#713f12",lineHeight:1.6}}>{cur.insight}</div>
         </Card>
-        <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:14,fontSize:12,color:"#0c4a6e",marginBottom:16}}>
-          <strong>References:</strong> Donovan JL et al. <em>N Engl J Med</em> 2016;375(15):1425-1437. DOI: 10.1056/NEJMoa1606221 | Donovan JL et al. <em>NEJM Evidence</em> 2023;2(4):EVIDoa2300018. DOI: 10.1056/EVIDoa2300018
+        {/* ProtecT 15-Year Cancer Outcomes */}
+        <Card style={{marginBottom:16}}>
+          <CancerControlSummary />
+        </Card>
+
+        {/* Grade-specific oncologic outcomes */}
+        {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && (
+          <Card style={{marginBottom:16}}>
+            <GradeGroupOutcomes gleason={clinical.gleason} />
+          </Card>
+        )}
+
+        <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#166534",marginBottom:4}}>Key Cancer Control Takeaways</div>
+          <div style={{fontSize:13,color:"#166534",lineHeight:1.7}}>
+            <p style={{marginBottom:8}}><strong>Mortality is very low:</strong> Prostate cancer death was ~3% across all ProtecT groups at 15 years with no significant difference between treatments.</p>
+            <p style={{marginBottom:8}}><strong>Metastasis and progression differ:</strong> Active monitoring had ~2x the metastasis rate (9.4% vs ~5%) and ~2.5x the clinical progression rate vs radical treatment.</p>
+            <p style={{marginBottom:8}}><strong>Grade Group matters:</strong> Higher Grade Groups have progressively more BCR, salvage treatment, and metastasis. GG1 has excellent outcomes with any approach; GG4-5 require definitive multimodal treatment.</p>
+            <p style={{marginBottom:0}}><strong>Salvage RT is effective:</strong> GETUG-AFU 17 and RAVES showed early salvage radiation achieves similar cancer control to adjuvant RT — sparing ~50% of men from radiation.</p>
+          </div>
+        </Card>
+
+        <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:14,fontSize:11,color:"#0c4a6e",marginBottom:16}}>
+          <strong>References:</strong> Hamdy FC et al. <em>NEJM</em> 2023;388:1547-58 (DOI: 10.1056/NEJMoa2214122) | Donovan JL et al. <em>NEJM</em> 2016;375:1425-37 (DOI: 10.1056/NEJMoa1606221) | Donovan JL et al. <em>NEJM Evid</em> 2023;2(4) (DOI: 10.1056/EVIDoa2300018) | Sargos P et al. <em>Lancet Oncol</em> 2020;21:1341-52 | Kneebone A et al. <em>Lancet Oncol</em> 2020;21:1331-40
         </div>
         <div style={{display:"flex",justifyContent:"space-between",marginTop:32}}>
           <button style={btnS} onClick={()=>setStep(5)}>← Predicted Outcomes</button>
@@ -768,6 +1078,13 @@ export default function ProstateCancerDecisionGuide() {
           </div>
           <div style={{fontSize:11,color:"#94a3b8",marginTop:8}}>Adjusted for IPSS {ipssTotal||"—"}, SHIM {shimTotal||"—"}, BMI {bmi||"—"}, Age {clinical.age||"—"}</div>
         </Card>
+
+        {/* Grade-specific cancer control in summary */}
+        {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && (
+          <Card style={{marginBottom:16}}>
+            <GradeGroupOutcomes gleason={clinical.gleason} />
+          </Card>
+        )}
 
         <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
           <h3 style={{fontSize:16,fontWeight:700,marginBottom:8,color:"#166534"}}>Questions to Ask Your Doctor</h3>
