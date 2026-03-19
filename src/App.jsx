@@ -377,6 +377,40 @@ const LANDMARK_TRIALS = [
   }
 ];
 
+// ---- LANDMARK TRIAL RELEVANCE HELPER ----
+function getTrialRelevance(trialName, gleason, stage) {
+  // Returns: "relevant" or "reference"
+  const g = gleason || "";
+  const isLowIntermediate = ["6", "3+4"].includes(g);
+  const isHighGleason = ["4+3", "8", "9"].includes(g);
+  const isLocallyAdvanced = ["T3a", "T3b-T4"].includes(stage);
+
+  switch(trialName) {
+    case "ProtecT":
+      return "relevant"; // any localized PCa
+    case "PIVOT":
+      return isLowIntermediate ? "relevant" : "reference"; // low/intermediate risk
+    case "SPCG-4":
+      return "reference"; // pre-PSA era context (historical)
+    case "RADICALS-RT":
+      return isHighGleason ? "relevant" : "reference"; // post-op salvage; higher grades
+    case "RTOG 9601":
+      return isHighGleason ? "relevant" : "reference"; // salvage; higher grades
+    case "RTOG 94-08":
+      return isLowIntermediate || isHighGleason ? "relevant" : "reference"; // intermediate/high risk with RT
+    case "EORTC 22961":
+      return isHighGleason || isLocallyAdvanced ? "relevant" : "reference"; // high risk or T3+
+    case "CHHiP":
+      return "relevant"; // any risk, fractionation applies broadly
+    case "ASCENDE-RT":
+      return (isLowIntermediate || isHighGleason) ? "relevant" : "reference"; // intermediate/high risk with RT
+    case "PREVENT":
+      return "relevant"; // diagnostic/biopsy pathway, always relevant
+    default:
+      return "reference";
+  }
+}
+
 // ---- CEASAR STUDY DATA ----
 const CEASAR_STUDY = {
   title: "CEASAR Study: Contemporary US Real-World Outcomes",
@@ -1019,13 +1053,18 @@ export default function ProstateCancerDecisionGuide() {
   function scoreTreatments(){
     if(!risk) return [];
     const p=priorities,sc={};
-    if(["Very Low","Low","Favorable Intermediate"].includes(risk))
+    const a=parseInt(clinical.age);
+    const highGleason=["4+3","8","9"].includes(clinical.gleason);
+    const isElderly=a>75;
+
+    // Active Surveillance: allow only for lower grades OR if age > 75
+    if(["Very Low","Low","Favorable Intermediate"].includes(risk)&&(!highGleason||isElderly))
       sc.activeSurveillance=p.avoidSideEffects*5+p.certaintyOfCure*2+p.minimizeRecovery*5+p.preserveErections*5+p.avoidOngoing*1+p.preserveBowel*5;
     sc.surgery=p.avoidSideEffects*2+p.certaintyOfCure*5+p.minimizeRecovery*2+p.preserveErections*3+p.avoidOngoing*5+p.preserveBowel*5;
     sc.radiation=p.avoidSideEffects*3+p.certaintyOfCure*5+p.minimizeRecovery*4+p.preserveErections*3.5+p.avoidOngoing*3+p.preserveBowel*3;
-    if(["Very Low","Low","Favorable Intermediate"].includes(risk))
+    // Focal Therapy: allow only for lower grades OR if age > 75
+    if(["Very Low","Low","Favorable Intermediate"].includes(risk)&&(!highGleason||isElderly))
       sc.focalTherapy=p.avoidSideEffects*4.5+p.certaintyOfCure*3+p.minimizeRecovery*4.5+p.preserveErections*5+p.avoidOngoing*3.5+p.preserveBowel*5;
-    const a=parseInt(clinical.age);
     if(a>=70){if(sc.activeSurveillance!==undefined) sc.activeSurveillance+=5;sc.radiation+=3;}
     if(a<55) sc.surgery+=4;
     // Adjust for baseline function
@@ -1616,11 +1655,24 @@ export default function ProstateCancerDecisionGuide() {
         {activeEvidenceTab==="landmark-trials"&&(
           <>
             <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>10 Most Influential Localized Prostate Cancer Trials</h3>
-            {LANDMARK_TRIALS.map(trial=>(
-              <Card key={trial.id} style={{marginBottom:12,cursor:"pointer",background:expandedTrial===trial.id?"#f0f9ff":"#fff"}} onClick={()=>setExpandedTrial(expandedTrial===trial.id?null:trial.id)}>
+            {LANDMARK_TRIALS.slice().sort((a,b)=>{
+              const aRel = getTrialRelevance(a.name, clinical.gleason, clinical.stage);
+              const bRel = getTrialRelevance(b.name, clinical.gleason, clinical.stage);
+              if(aRel === "relevant" && bRel !== "relevant") return -1;
+              if(aRel !== "relevant" && bRel === "relevant") return 1;
+              return a.id - b.id;
+            }).map(trial=>{
+              const relevance = getTrialRelevance(trial.name, clinical.gleason, clinical.stage);
+              const isRelevant = relevance === "relevant";
+              return(
+              <Card key={trial.id} style={{marginBottom:12,cursor:"pointer",background:expandedTrial===trial.id?"#f0f9ff":"#fff",borderLeft:isRelevant?"4px solid #10b981":"none"}} onClick={()=>setExpandedTrial(expandedTrial===trial.id?null:trial.id)}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
-                  <div>
-                    <h4 style={{fontSize:15,fontWeight:700,marginBottom:2}}>{trial.id}. {trial.name} ({trial.year})</h4>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                      <h4 style={{fontSize:15,fontWeight:700,margin:0}}>{trial.id}. {trial.name} ({trial.year})</h4>
+                      {isRelevant && <span style={{background:"#10b981",color:"#fff",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:12,whiteSpace:"nowrap"}}>Relevant to Your Case</span>}
+                      {!isRelevant && <span style={{background:"#cbd5e1",color:"#475569",fontSize:10,fontWeight:700,padding:"3px 10px",borderRadius:12,whiteSpace:"nowrap"}}>For Reference</span>}
+                    </div>
                     <div style={{fontSize:12,color:"#64748b",marginBottom:6}}><strong>n={trial.n}</strong> | {trial.duration} follow-up</div>
                     <div style={{fontSize:13,color:"#475569",fontWeight:500}}>{trial.question}</div>
                   </div>
@@ -1642,7 +1694,8 @@ export default function ProstateCancerDecisionGuide() {
                   </div>
                 )}
               </Card>
-            ))}
+            );
+            })}
           </>
         )}
 
