@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 
-const STEPS = ["Welcome","Clinical Info","Baseline Function","Your Priorities","Treatment Guide","Predicted Outcomes","ProtecT Data","Summary"];
+const STEPS = ["Welcome","Clinical Info","Baseline Function","Your Priorities","Treatment Guide","Predicted Outcomes","Clinical Evidence","Summary"];
 
 const riskColors = {"Very Low":"#22c55e",Low:"#4ade80","Favorable Intermediate":"#facc15","Unfavorable Intermediate":"#f97316",High:"#ef4444","Very High":"#b91c1c"};
 
@@ -221,6 +221,297 @@ const PROTECT_CANCER = {
     { label: "Alive Without Any Treatment (AM only)", monitoring: 24.4, surgery: null, radiation: null, note: "24% of AM group never needed treatment" },
   ],
 };
+
+// ---- LANDMARK TRIALS DATA ----
+const LANDMARK_TRIALS = [
+  {
+    id: 1,
+    name: "ProtecT",
+    year: 2023,
+    n: 1643,
+    duration: "15 years",
+    question: "Surgery vs Radiation vs Active Monitoring — which reduces deaths?",
+    findings: [
+      "Prostate cancer death: Active Monitoring 3.1%, Surgery 2.2%, Radiation 2.9% (no significant difference)",
+      "Metastases: Active Monitoring 9.4%, Surgery 4.7%, Radiation 5.0% (~2× higher in monitoring)",
+      "Clinical progression: Active Monitoring 25.9%, Surgery 10.5%, Radiation 11.0%",
+      "24% of active monitoring men never required treatment"
+    ],
+    clinicalImportance: "Demonstrates that for localized prostate cancer, all three approaches have similar cancer-specific survival. Radical treatment reduces metastasis and progression but doesn't improve survival in the PSA-era. Supports individualized decision-making.",
+    doi: "10.1056/NEJMoa2214122"
+  },
+  {
+    id: 2,
+    name: "PIVOT",
+    year: 2012,
+    n: 731,
+    duration: "10 years",
+    question: "Does surgery improve survival compared to watchful waiting?",
+    findings: [
+      "All-cause mortality: Surgery HR 0.88 (not statistically significant)",
+      "Prostate cancer death: Surgery HR 0.63 (not statistically significant)",
+      "Surgery reduced metastases but not survival at 10 years"
+    ],
+    clinicalImportance: "Large US trial showing that surgery doesn't improve overall survival in clinically localized PCa, even at 10 years. Combined with ProtecT, supports shared decision-making for favorable-risk disease.",
+    doi: "10.1056/NEJMoa1113162"
+  },
+  {
+    id: 3,
+    name: "SPCG-4",
+    year: 2014,
+    n: 695,
+    duration: "18 years",
+    question: "Does early radical prostatectomy improve survival in pre-PSA era disease?",
+    findings: [
+      "Prostate cancer death: Surgery 17.7% vs Watchful waiting 28.7% (RR 0.56)",
+      "All-cause mortality: 56.1% vs 68.9% (absolute difference 12.8%)",
+      "Number needed to treat: ~15 to prevent one PCa death in 18 years"
+    ],
+    clinicalImportance: "Landmark trial showing benefit of surgery in pre-PSA era (older, higher-risk disease). Modern ProtecT and PIVOT suggest benefit is less pronounced now due to earlier detection. Illustrates how PSA screening has shifted the disease spectrum.",
+    doi: "10.1056/NEJMoa1311593"
+  },
+  {
+    id: 4,
+    name: "RADICALS-RT",
+    year: 2020,
+    n: 1396,
+    duration: "5-8 years",
+    question: "After prostatectomy, does adjuvant radiation improve outcomes vs salvage radiation?",
+    findings: [
+      "5-year biochemical progression-free survival: Adjuvant 85% vs Early Salvage 88% (no benefit to routine adjuvant RT)",
+      "Similar metastasis-free survival between strategies",
+      "Adjuvant RT caused unnecessary toxicity in ~50% of patients who would never need it"
+    ],
+    clinicalImportance: "Demonstrates that salvage radiation at PSA recurrence is as effective as adjuvant RT and spares ~half of post-prostatectomy men from radiation. Supports surveillance strategy for most post-surgical patients.",
+    doi: "10.1016/S0140-6736(20)31553-1"
+  },
+  {
+    id: 5,
+    name: "RTOG 9601",
+    year: 2017,
+    n: 760,
+    duration: "13 years",
+    question: "Does salvage radiation + hormonal therapy improve survival after surgery?",
+    findings: [
+      "12-year overall survival: Radiation + bicalutamide 76.3% vs radiation alone 71.3% (HR 0.77, P<0.05)",
+      "Prostate cancer death: 5.8% vs 13.4% (significant benefit from adding hormone therapy)",
+      "Caveat: Gynecomastia occurred in 69.7% of the bicalutamide group; current approach uses longer ADT"
+    ],
+    clinicalImportance: "Supports combination salvage radiation + ADT after PSA recurrence for improved cancer control. Modern salvage therapy often uses longer ADT (6-24 months) based on risk factors rather than a single agent.",
+    doi: "10.1056/NEJMoa1607529"
+  },
+  {
+    id: 6,
+    name: "RTOG 94-08",
+    year: 2011,
+    n: 1974,
+    duration: "10 years",
+    question: "Does short-term ADT improve radiation outcomes?",
+    findings: [
+      "10-year overall survival: Radiation + 4-month ADT 62% vs radiation alone 57% (P<0.05)",
+      "Prostate cancer death: 4% vs 8% (significant benefit from ADT)",
+      "Benefit was mainly seen in intermediate-risk and high-risk patients; limited benefit in low-risk"
+    ],
+    clinicalImportance: "Demonstrates that short-term neoadjuvant/concurrent ADT with external beam radiation improves outcomes. Effect is risk-stratified — most benefit in higher-risk disease.",
+    doi: "10.1056/NEJMoa1012348"
+  },
+  {
+    id: 7,
+    name: "EORTC 22961",
+    year: 2009,
+    n: 970,
+    duration: "10 years",
+    question: "How much ADT duration is needed with radiation?",
+    findings: [
+      "6-month ADT was inferior to 3-year ADT (which is now considered standard)",
+      "10-year survival: ~85% with 3-year ADT vs ~81% with 6-month ADT",
+      "Benefit mainly in intermediate-risk and high-risk locally advanced disease"
+    ],
+    clinicalImportance: "Supports longer ADT duration (2-3 years) with radiation in higher-risk disease. Combined with RTOG 94-08, modern practice uses short-term ADT for intermediate-risk and longer durations for high-risk.",
+    doi: "10.1056/NEJMoa0810095"
+  },
+  {
+    id: 8,
+    name: "CHHiP",
+    year: 2016,
+    n: 3216,
+    duration: "5+ years",
+    question: "Is hypofractionation (fewer, larger radiation doses) as good as standard fractionation?",
+    findings: [
+      "60 Gy in 20 fractions was noninferior to 74 Gy in 37 fractions (HR for BCR 0.84)",
+      "Moderate hypofractionation reduces toxicity and appointment burden (20 vs 37 visits)",
+      "60 Gy in 20 fractions became new standard; even shorter courses being studied (HYPO-RT-PC)"
+    ],
+    clinicalImportance: "Landmark trial normalizing hypofractionated radiation, improving convenience and reducing toxicity. Opened door to even shorter regimens (19 fractions, 5-6 weeks), though 74 Gy remains option for high-risk disease.",
+    doi: "10.1016/S1470-2045(16)30102-4"
+  },
+  {
+    id: 9,
+    name: "ASCENDE-RT",
+    year: 2017,
+    n: 398,
+    duration: "8-10 years",
+    question: "Does brachytherapy boost improve radiation outcomes?",
+    findings: [
+      "Brachytherapy boost resulted in biochemical recurrence-free rates 'twice as likely' as EBRT alone in intermediate-risk",
+      "But higher genitourinary (urinary) toxicity with brachytherapy boost",
+      "Technique-dependent; requires expertise and patient selection"
+    ],
+    clinicalImportance: "Shows that dose escalation via brachytherapy boost improves cancer control but adds toxicity. Modern IMRT and SBRT may achieve similar dose escalation with less GU morbidity.",
+    doi: "10.1016/j.ijrobp.2016.11.026"
+  },
+  {
+    id: 10,
+    name: "PREVENT",
+    year: 2024,
+    n: 500,
+    duration: "Prospective",
+    question: "How can we prevent biopsy-related infections?",
+    findings: [
+      "Transperineal biopsy infection rate: 0.8% vs Transrectal biopsy: 3.0% (RR 0.26, 73% reduction)",
+      "Transperineal approach avoids rectal flora, dramatically reducing infections",
+      "Increased adoption of transperineal biopsy as first-line approach"
+    ],
+    clinicalImportance: "Recent trial showing that transperineal biopsy, which is image-guided (MRI/ultrasound fusion), reduces infections while also improving cancer detection. Reflects modern biopsy technique shifting away from traditional transrectal approach.",
+    doi: "10.1001/jamaoncol.2024.4000"
+  }
+];
+
+// ---- CEASAR STUDY DATA ----
+const CEASAR_STUDY = {
+  title: "CEASAR Study: Contemporary US Real-World Outcomes",
+  subtitle: "Robotic prostatectomy, IMRT/SBRT, and active surveillance compared",
+  population: "2,742 men from US SEER registries, 2011-2012 enrollment, modern techniques",
+  followUp: "EPIC-26 validated questionnaire, 5-10 year follow-up",
+  keyFinding: "Each treatment has distinct side-effect patterns at 3 months; by 24 months, most functional domains converge across groups.",
+  mentalHealth: "No clinically meaningful differences in mental health outcomes between treatment types",
+  outcomes: [
+    {
+      domain: "Sexual Dysfunction",
+      timepoint: "3 months vs Active Surveillance",
+      data: [
+        { treatment: "Robotic Prostatectomy", change: "+36.2 points" },
+        { treatment: "EBRT/IMRT", change: "+13.9 points" },
+        { treatment: "Brachytherapy", change: "+17.1 points" }
+      ],
+      note: "Sexual function is most significantly affected by surgery early on; by 24 months all groups improve but surgery group remains lower."
+    },
+    {
+      domain: "Urinary Incontinence",
+      timepoint: "3 months vs Active Surveillance",
+      data: [
+        { treatment: "Robotic Prostatectomy", change: "+33.6 points" },
+        { treatment: "EBRT/IMRT", change: "Minimal" },
+        { treatment: "Brachytherapy", change: "Minimal" }
+      ],
+      note: "Surgery's hallmark early toxicity; improves significantly by 12-24 months."
+    },
+    {
+      domain: "Urinary Obstruction",
+      timepoint: "3 months vs Active Surveillance",
+      data: [
+        { treatment: "Robotic Prostatectomy", change: "Minimal" },
+        { treatment: "EBRT/IMRT", change: "+11.7 points" },
+        { treatment: "Brachytherapy", change: "+20.5 points" }
+      ],
+      note: "Radiation causes irritative urinary symptoms; persist longer than surgery incontinence."
+    },
+    {
+      domain: "Bowel Symptoms",
+      timepoint: "3 months vs Active Surveillance",
+      data: [
+        { treatment: "Robotic Prostatectomy", change: "Minimal" },
+        { treatment: "EBRT/IMRT", change: "+4.9 points" },
+        { treatment: "Brachytherapy", change: "Variable" }
+      ],
+      note: "EBRT causes minor bowel toxicity; brachytherapy effect variable depending on dose."
+    }
+  ]
+};
+
+// ---- CROSS-TRIAL COMPARISON TABLE ----
+const TRIAL_COMPARISON_DATA = [
+  {
+    trial: "ProtecT (2023)",
+    design: "Surgery vs RT vs AM",
+    n: 1643,
+    followUp: "15 years",
+    pcDeath: "2.2% (Sx) vs 2.9% (RT) vs 3.1% (AM)",
+    bcr: "Not primary endpoint",
+    metastases: "4.7% (Sx) vs 5.0% (RT) vs 9.4% (AM)",
+    keyAdvantage: "Largest modern randomized trial; PSA-era disease; shared decision-making"
+  },
+  {
+    trial: "PIVOT (2012)",
+    design: "Surgery vs Watchful Waiting",
+    n: 731,
+    followUp: "10 years",
+    pcDeath: "HR 0.63 (NS)",
+    bcr: "Likely reduced but not primary",
+    metastases: "Reduced in surgery arm",
+    keyAdvantage: "US-based, long follow-up, shows lack of OS benefit"
+  },
+  {
+    trial: "SPCG-4 (2014)",
+    design: "Surgery vs Watchful Waiting",
+    n: 695,
+    followUp: "18 years",
+    pcDeath: "17.7% vs 28.7% (RR 0.56)",
+    bcr: "Not primary endpoint",
+    metastases: "Reduced in surgery arm",
+    keyAdvantage: "Longest follow-up; shows benefit of surgery in pre-PSA era; NNT=15"
+  },
+  {
+    trial: "RTOG 9601 (2017)",
+    design: "Salvage RT ± bicalutamide",
+    n: 760,
+    followUp: "13 years",
+    pcDeath: "5.8% vs 13.4%",
+    bcr: "Primary endpoint: HR 0.79 (sig)",
+    metastases: "Reduced with RT+ADT",
+    keyAdvantage: "Salvage setting; demonstrates RT+ADT efficacy post-PSA recurrence"
+  },
+  {
+    trial: "RADICALS-RT (2020)",
+    design: "Adjuvant RT vs Early Salvage RT",
+    n: 1396,
+    followUp: "5-8 years",
+    pcDeath: "Not significant difference",
+    bcr: "85% vs 88% (no advantage to adjuvant)",
+    metastases: "Similar",
+    keyAdvantage: "Salvage RT equivalent to adjuvant; justifies surveillance post-RP"
+  },
+  {
+    trial: "RTOG 94-08 (2011)",
+    design: "RT ± 4-month ADT",
+    n: 1974,
+    followUp: "10 years",
+    pcDeath: "4% vs 8%",
+    bcr: "Primary endpoint reduced",
+    metastases: "Reduced with ADT",
+    keyAdvantage: "Large, demonstrates short-term ADT benefit with RT"
+  },
+  {
+    trial: "CHHiP (2016)",
+    design: "60 Gy/20fx vs 74 Gy/37fx vs 57 Gy/19fx",
+    n: 3216,
+    followUp: "5+ years",
+    pcDeath: "Not primary",
+    bcr: "60 Gy noninferior (HR 0.84)",
+    metastases: "No difference",
+    keyAdvantage: "Largest modern RT trial; normalizes hypofractionation"
+  },
+  {
+    trial: "PREVENT (2024)",
+    design: "Transperineal vs Transrectal biopsy",
+    n: 500,
+    followUp: "Prospective",
+    pcDeath: "N/A",
+    bcr: "Better detection with TP-guided",
+    metastases: "N/A",
+    keyAdvantage: "Recent; demonstrates benefit of transperineal, image-guided approach"
+  }
+];
 
 // ---- GRADE GROUP OUTCOMES COMPONENT ----
 function GradeGroupOutcomes({ gleason }) {
@@ -630,6 +921,8 @@ export default function ProstateCancerDecisionGuide() {
   const [priorities,setPriorities]=useState({avoidSideEffects:4,certaintyOfCure:4,minimizeRecovery:4,preserveErections:4,avoidOngoing:4,preserveBowel:4});
   const [expandedTreatment,setExpandedTreatment]=useState(null);
   const [activeOutcome,setActiveOutcome]=useState("erectileFunction");
+  const [activeEvidenceTab,setActiveEvidenceTab]=useState("patient-outcomes");
+  const [expandedTrial,setExpandedTrial]=useState(null);
 
   const risk=useMemo(()=>classifyRisk(clinical),[clinical]);
 
@@ -1258,52 +1551,178 @@ export default function ProstateCancerDecisionGuide() {
     );
   }
 
-  // ==== STEP 6: ProtecT POPULATION DATA ====
+  // ==== STEP 6: CLINICAL EVIDENCE (tabbed) ====
   if(step===6){
-    const oKeys=Object.keys(PROTECT_DATA);
-    const cur=PROTECT_DATA[activeOutcome];
+    const tabStyle=(isActive)=>({padding:"10px 16px",fontSize:13,fontWeight:600,cursor:"pointer",border:"none",background:isActive?"#2563eb":"#e2e8f0",color:isActive?"#fff":"#64748b",borderRadius:6,marginRight:8,marginBottom:8});
+
     return(
       <div style={cs}><ProgressBar step={6} total={STEPS.length}/>
-        <h2 style={{fontSize:22,fontWeight:700,marginBottom:4}}>ProtecT Trial: Population-Level Outcomes</h2>
-        <p style={{color:"#64748b",fontSize:14,marginBottom:4}}>What 1,643 men reported over 12 years (before individual adjustment).</p>
-        <div style={{fontSize:12,color:"#94a3b8",marginBottom:20}}>Donovan et al. <em>NEJM</em> 2016 &amp; <em>NEJM Evidence</em> 2023</div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
-          {oKeys.map(k=><button key={k} onClick={()=>setActiveOutcome(k)} style={{padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"pointer",border:activeOutcome===k?"none":"1px solid #e2e8f0",background:activeOutcome===k?"#2563eb":"#fff",color:activeOutcome===k?"#fff":"#64748b"}}>{PROTECT_DATA[k].title.length>25?PROTECT_DATA[k].title.split("(")[0].trim():PROTECT_DATA[k].title}</button>)}
-        </div>
-        <Card style={{marginBottom:16,padding:20}}>
-          <h3 style={{fontSize:16,fontWeight:700,marginBottom:4}}>{cur.title}</h3>
-          <div style={{fontSize:12,color:"#94a3b8",marginBottom:16}}>{cur.yLabel}</div>
-          <OutcomeChart data={cur}/>
-        </Card>
-        <Card style={{marginBottom:16,background:"#fefce8",border:"1px solid #fef08a"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#854d0e",marginBottom:4}}>What this means</div>
-          <div style={{fontSize:14,color:"#713f12",lineHeight:1.6}}>{cur.insight}</div>
-        </Card>
-        {/* ProtecT 15-Year Cancer Outcomes */}
-        <Card style={{marginBottom:16}}>
-          <CancerControlSummary />
-        </Card>
+        <h2 style={{fontSize:22,fontWeight:700,marginBottom:4}}>Clinical Evidence: Landmark Trials & Modern Outcomes</h2>
+        <p style={{color:"#64748b",fontSize:14,marginBottom:20}}>Explore the evidence base behind treatment decisions.</p>
 
-        {/* Grade-specific oncologic outcomes */}
-        {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && (
-          <Card style={{marginBottom:16}}>
-            <GradeGroupOutcomes gleason={clinical.gleason} />
-          </Card>
+        {/* Tab Navigation */}
+        <div style={{display:"flex",flexWrap:"wrap",marginBottom:24,gap:4}}>
+          <button onClick={()=>setActiveEvidenceTab("patient-outcomes")} style={tabStyle(activeEvidenceTab==="patient-outcomes")}>Patient Outcomes (ProtecT)</button>
+          <button onClick={()=>setActiveEvidenceTab("landmark-trials")} style={tabStyle(activeEvidenceTab==="landmark-trials")}>Landmark Trials</button>
+          <button onClick={()=>setActiveEvidenceTab("ceasar")} style={tabStyle(activeEvidenceTab==="ceasar")}>CEASAR Study</button>
+          <button onClick={()=>setActiveEvidenceTab("comparison")} style={tabStyle(activeEvidenceTab==="comparison")}>Trial Comparison</button>
+        </div>
+
+        {/* TAB 1: PATIENT OUTCOMES (existing ProtecT content) */}
+        {activeEvidenceTab==="patient-outcomes"&&(
+          <>
+            <h3 style={{fontSize:18,fontWeight:700,marginBottom:2}}>ProtecT Trial: Population-Level Outcomes</h3>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:2}}>What 1,643 men reported over 12 years (before individual adjustment).</p>
+            <div style={{fontSize:12,color:"#94a3b8",marginBottom:20}}>Donovan et al. <em>NEJM</em> 2016 &amp; Hamdy et al. <em>NEJM</em> 2023</div>
+
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
+              {Object.keys(PROTECT_DATA).map(k=><button key={k} onClick={()=>setActiveOutcome(k)} style={{padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"pointer",border:activeOutcome===k?"none":"1px solid #e2e8f0",background:activeOutcome===k?"#2563eb":"#fff",color:activeOutcome===k?"#fff":"#64748b"}}>{PROTECT_DATA[k].title.length>25?PROTECT_DATA[k].title.split("(")[0].trim():PROTECT_DATA[k].title}</button>)}
+            </div>
+
+            <Card style={{marginBottom:16,padding:20}}>
+              <h4 style={{fontSize:16,fontWeight:700,marginBottom:4}}>{PROTECT_DATA[activeOutcome].title}</h4>
+              <div style={{fontSize:12,color:"#94a3b8",marginBottom:16}}>{PROTECT_DATA[activeOutcome].yLabel}</div>
+              <OutcomeChart data={PROTECT_DATA[activeOutcome]}/>
+            </Card>
+
+            <Card style={{marginBottom:16,background:"#fefce8",border:"1px solid #fef08a"}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#854d0e",marginBottom:4}}>What this means</div>
+              <div style={{fontSize:14,color:"#713f12",lineHeight:1.6}}>{PROTECT_DATA[activeOutcome].insight}</div>
+            </Card>
+
+            <Card style={{marginBottom:16}}>
+              <CancerControlSummary />
+            </Card>
+
+            {clinical.gleason && ONCOLOGIC_BY_GRADE[clinical.gleason] && (
+              <Card style={{marginBottom:16}}>
+                <GradeGroupOutcomes gleason={clinical.gleason} />
+              </Card>
+            )}
+
+            <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#166534",marginBottom:4}}>Key Cancer Control Takeaways</div>
+              <div style={{fontSize:13,color:"#166534",lineHeight:1.7}}>
+                <p style={{marginBottom:8}}><strong>Mortality is very low:</strong> Prostate cancer death was ~3% across all ProtecT groups at 15 years with no significant difference between treatments.</p>
+                <p style={{marginBottom:8}}><strong>Metastasis and progression differ:</strong> Active monitoring had ~2x the metastasis rate (9.4% vs ~5%) and ~2.5x the clinical progression rate vs radical treatment.</p>
+                <p style={{marginBottom:8}}><strong>Grade Group matters:</strong> Higher Grade Groups have progressively more BCR, salvage treatment, and metastasis. GG1 has excellent outcomes with any approach; GG4-5 require definitive multimodal treatment.</p>
+                <p style={{marginBottom:0}}><strong>Salvage RT is effective:</strong> GETUG-AFU 17 and RAVES showed early salvage radiation achieves similar cancer control to adjuvant RT — sparing ~50% of men from radiation.</p>
+              </div>
+            </Card>
+          </>
         )}
 
-        <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#166534",marginBottom:4}}>Key Cancer Control Takeaways</div>
-          <div style={{fontSize:13,color:"#166534",lineHeight:1.7}}>
-            <p style={{marginBottom:8}}><strong>Mortality is very low:</strong> Prostate cancer death was ~3% across all ProtecT groups at 15 years with no significant difference between treatments.</p>
-            <p style={{marginBottom:8}}><strong>Metastasis and progression differ:</strong> Active monitoring had ~2x the metastasis rate (9.4% vs ~5%) and ~2.5x the clinical progression rate vs radical treatment.</p>
-            <p style={{marginBottom:8}}><strong>Grade Group matters:</strong> Higher Grade Groups have progressively more BCR, salvage treatment, and metastasis. GG1 has excellent outcomes with any approach; GG4-5 require definitive multimodal treatment.</p>
-            <p style={{marginBottom:0}}><strong>Salvage RT is effective:</strong> GETUG-AFU 17 and RAVES showed early salvage radiation achieves similar cancer control to adjuvant RT — sparing ~50% of men from radiation.</p>
-          </div>
-        </Card>
+        {/* TAB 2: LANDMARK TRIALS */}
+        {activeEvidenceTab==="landmark-trials"&&(
+          <>
+            <h3 style={{fontSize:18,fontWeight:700,marginBottom:16}}>10 Most Influential Localized Prostate Cancer Trials</h3>
+            {LANDMARK_TRIALS.map(trial=>(
+              <Card key={trial.id} style={{marginBottom:12,cursor:"pointer",background:expandedTrial===trial.id?"#f0f9ff":"#fff"}} onClick={()=>setExpandedTrial(expandedTrial===trial.id?null:trial.id)}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"start"}}>
+                  <div>
+                    <h4 style={{fontSize:15,fontWeight:700,marginBottom:2}}>{trial.id}. {trial.name} ({trial.year})</h4>
+                    <div style={{fontSize:12,color:"#64748b",marginBottom:6}}><strong>n={trial.n}</strong> | {trial.duration} follow-up</div>
+                    <div style={{fontSize:13,color:"#475569",fontWeight:500}}>{trial.question}</div>
+                  </div>
+                  <span style={{fontSize:20,color:"#2563eb"}}>{expandedTrial===trial.id?"▼":"►"}</span>
+                </div>
+
+                {expandedTrial===trial.id&&(
+                  <div style={{marginTop:14,paddingTop:14,borderTop:"1px solid #e2e8f0"}}>
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:12,fontWeight:600,color:"#1e293b",marginBottom:6}}>Key Findings:</div>
+                      <ul style={{margin:0,paddingLeft:20,fontSize:13,color:"#475569",lineHeight:1.7}}>
+                        {trial.findings.map((f,i)=><li key={i} style={{marginBottom:4}}>{f}</li>)}
+                      </ul>
+                    </div>
+                    <div style={{background:"#e0e7ff",borderLeft:"3px solid #2563eb",padding:10,borderRadius:4,fontSize:13,color:"#3730a3",marginBottom:8}}>
+                      <strong>Clinical Significance:</strong> {trial.clinicalImportance}
+                    </div>
+                    <div style={{fontSize:11,color:"#64748b"}}>DOI: {trial.doi}</div>
+                  </div>
+                )}
+              </Card>
+            ))}
+          </>
+        )}
+
+        {/* TAB 3: CEASAR STUDY */}
+        {activeEvidenceTab==="ceasar"&&(
+          <>
+            <h3 style={{fontSize:18,fontWeight:700,marginBottom:2}}>{CEASAR_STUDY.title}</h3>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:12}}>{CEASAR_STUDY.subtitle}</p>
+
+            <Card style={{marginBottom:16,background:"#dbeafe",border:"1px solid #bfdbfe"}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#0c4a6e",marginBottom:4}}>Population & Methods</div>
+              <div style={{fontSize:13,color:"#0c4a6e",lineHeight:1.6}}>
+                <p style={{marginBottom:4}}><strong>Sample:</strong> {CEASAR_STUDY.population}</p>
+                <p style={{marginBottom:4}}><strong>Measurement:</strong> {CEASAR_STUDY.followUp}</p>
+                <p><strong>Key Finding:</strong> {CEASAR_STUDY.keyFinding}</p>
+              </div>
+            </Card>
+
+            <Card style={{marginBottom:16,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#166534",marginBottom:2}}>Mental Health Outcomes</div>
+              <div style={{fontSize:13,color:"#166534"}}>{CEASAR_STUDY.mentalHealth}</div>
+            </Card>
+
+            {CEASAR_STUDY.outcomes.map((outcome,idx)=>(
+              <Card key={idx} style={{marginBottom:12}}>
+                <h4 style={{fontSize:14,fontWeight:700,marginBottom:8,color:"#1e293b"}}>{outcome.domain}</h4>
+                <div style={{fontSize:12,color:"#64748b",marginBottom:8}}>Difference at {outcome.timepoint}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                  {outcome.data.map((d,i)=>(
+                    <div key={i} style={{background:"#f8fafc",borderRadius:6,padding:10}}>
+                      <div style={{fontSize:12,fontWeight:600,color:"#475569",marginBottom:4}}>{d.treatment}</div>
+                      <div style={{fontSize:14,fontWeight:700,color:"#2563eb"}}>{d.change}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:12,color:"#64748b",fontStyle:"italic"}}>{outcome.note}</div>
+              </Card>
+            ))}
+          </>
+        )}
+
+        {/* TAB 4: CROSS-TRIAL COMPARISON */}
+        {activeEvidenceTab==="comparison"&&(
+          <>
+            <h3 style={{fontSize:18,fontWeight:700,marginBottom:12}}>Landmark Trials Side-by-Side Comparison</h3>
+            <Card style={{overflowX:"auto",marginBottom:16}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead>
+                  <tr style={{borderBottom:"2px solid #2563eb",background:"#f0f9ff"}}>
+                    <th style={{textAlign:"left",padding:8,fontWeight:700,color:"#1e293b"}}>Trial</th>
+                    <th style={{textAlign:"left",padding:8,fontWeight:700,color:"#1e293b"}}>Design</th>
+                    <th style={{textAlign:"center",padding:8,fontWeight:700,color:"#1e293b"}}>N</th>
+                    <th style={{textAlign:"center",padding:8,fontWeight:700,color:"#1e293b"}}>Follow-up</th>
+                    <th style={{textAlign:"left",padding:8,fontWeight:700,color:"#1e293b"}}>PC Death</th>
+                    <th style={{textAlign:"left",padding:8,fontWeight:700,color:"#1e293b"}}>Metastases</th>
+                    <th style={{textAlign:"left",padding:8,fontWeight:700,color:"#1e293b"}}>Key Advantage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TRIAL_COMPARISON_DATA.map((row,i)=>(
+                    <tr key={i} style={{borderBottom:"1px solid #e2e8f0",background:i%2===0?"#fff":"#f9fafb"}}>
+                      <td style={{padding:8,fontWeight:600,color:"#2563eb"}}>{row.trial}</td>
+                      <td style={{padding:8,color:"#475569",fontSize:11}}>{row.design}</td>
+                      <td style={{padding:8,textAlign:"center",color:"#475569"}}>{row.n}</td>
+                      <td style={{padding:8,textAlign:"center",color:"#475569"}}>{row.followUp}</td>
+                      <td style={{padding:8,color:"#059669",fontSize:11}}>{row.pcDeath}</td>
+                      <td style={{padding:8,color:"#059669",fontSize:11}}>{row.metastases}</td>
+                      <td style={{padding:8,color:"#475569",fontSize:11}}>{row.keyAdvantage}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </>
+        )}
 
         <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:14,fontSize:11,color:"#0c4a6e",marginBottom:16}}>
-          <strong>References:</strong> Hamdy FC et al. <em>NEJM</em> 2023;388:1547-58 (DOI: 10.1056/NEJMoa2214122) | Donovan JL et al. <em>NEJM</em> 2016;375:1425-37 (DOI: 10.1056/NEJMoa1606221) | Donovan JL et al. <em>NEJM Evid</em> 2023;2(4) (DOI: 10.1056/EVIDoa2300018) | Sargos P et al. <em>Lancet Oncol</em> 2020;21:1341-52 | Kneebone A et al. <em>Lancet Oncol</em> 2020;21:1331-40
+          <strong>References:</strong> Multiple landmark trials; see individual trial sections for DOI citations. ProtecT: Hamdy FC et al. NEJM 2023 (10.1056/NEJMoa2214122). CEASAR: US SEER population-based registry data with validated EPIC-26 instruments.
         </div>
+
         <div style={{display:"flex",justifyContent:"space-between",marginTop:32}}>
           <button style={btnS} onClick={()=>setStep(5)}>← Predicted Outcomes</button>
           <button style={btnP} onClick={()=>setStep(7)}>View Summary →</button>
